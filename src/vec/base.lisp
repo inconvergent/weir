@@ -4,25 +4,19 @@
 (deftype pos-double () `(double-float 0d0 *))
 
 
-(declaim (inline make-vec vec-x vec-y))
-(defstruct (vec)
+(declaim (inline make-vec vec vec-x vec-y))
+(defstruct (vec (:constructor make-vec) (:constructor vec (x y)))
   (x 0d0 :type double-float :read-only nil)
   (y 0d0 :type double-float :read-only nil))
 
 
-(declaim (inline make-3vec 3vec-x 3vec-y 3vec-z))
-(defstruct (3vec (:include vec))
+(declaim (inline make-3vec 3vec 3vec-x 3vec-y 3vec-z))
+(defstruct (3vec (:include vec) (:constructor make-3vec)
+                                (:constructor 3vec (x y z)))
   (z 0d0 :type double-float :read-only nil))
 
-(declaim (inline vec))
-(defun vec (x y)
-  (declare (double-float x y))
-  (make-vec :x x :y y))
+#+SBCL(declaim (sb-ext:freeze-type vec 3vec))
 
-(declaim (inline 3vec))
-(defun 3vec (x y z)
-  (declare (double-float x y z))
-  (make-3vec :x x :y y :z z))
 
 (declaim (inline set!))
 (defun set! (a b)

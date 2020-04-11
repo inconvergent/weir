@@ -8,7 +8,7 @@
 
 (asdf:defsystem "weir"
   :description "A System for Making Generative Systems"
-  :version "3.73.0"
+  :version "3.73.1"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :serial t
