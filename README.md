@@ -5,7 +5,7 @@
 
 This library is specifically written to be useful for a broad range of ways in
 which I create art using various generative algorithms. It is the next
-iteration of [SNEK](https://github.com/inconvergent/snek). I made a new version
+iteration of [snek](https://github.com/inconvergent/snek). I made a new version
 because I wanted to make some significant changes.
 
 Main components:
@@ -30,8 +30,6 @@ Main components:
 
 6. A tool for drawing `svg` files (`draw-svg`). Mainly files that are good for
    plotting.
-
-7. A tool for drawing `png` files (`sandpaint`).
 
 
 ## Alterations
@@ -107,7 +105,7 @@ The `fn` package (for generating file names) depends on the `fn` command from
 https://github.com/inconvergent/fn, but this is not necessary to use any of the
 other packages.
 
-The code has only been tested in Ubuntu 18.04 LTS with SBCL 2.0.1.
+The code has only been tested in `Ubuntu 18.04 LTS` with `SBCL 2.0.1`.
 
 
 ## Tests
@@ -151,6 +149,9 @@ I would like to thank:
   - https://twitter.com/jackrusher
   - https://twitter.com/paulg
   - https://twitter.com/porglezomp
+  - https://twitter.com/stylewarning
 
 Who have provided me with useful hints and code feedback.
+
+Also, https://twitter.com/xach for making https://www.quicklisp.org/beta/.
 
