@@ -126,7 +126,13 @@ The code has only been tested in Ubuntu 18.04 LTS with SBCL 2.0.1.
 
 ## Tests
 
-See the `test` folder.
+Simply run:
+
+```
+(asdf:test-system :weir)
+```
+
+(See the previous section on ensuring the `.asd` file is seen.)
 
 
 ## In Case of QL Version Issues

@@ -35,6 +35,8 @@ Package was renamed from 'color' because of a package name collision.
   (b 0d0 :type double-float :read-only nil)
   (a 1d0 :type double-float :read-only nil))
 
+(weir-utils:define-struct-load-form rgba)
+
 
 (declaim (inline make))
 (defun make (r g b &optional (a 1d0))

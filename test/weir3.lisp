@@ -1,14 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
-
-(defun test-weir (wer)
+(defun test-weir3 (wer)
 
   (do-test (weir:3add-vert! wer (vec:3vec 0d0 0d0 3d0)) 0)
 
@@ -34,7 +26,7 @@
            (vec:3vec 7.5d0 200.6d0 2d0)))
 
 
-(defun test-weir-with ()
+(defun test-weir3-with ()
   (let ((wer (weir:make :dim 3)))
     (weir:with (wer %)
 
@@ -73,7 +65,7 @@
       (do-test (weir:edge-exists wer '(7 2)) nil)))
 
 
-(defun test-weir-split ()
+(defun test-weir3-split ()
   (let ((wer (weir:make :dim 3)))
 
     (weir:3add-vert! wer (vec:3vec 0d0 3d0 6d0))
@@ -93,7 +85,7 @@
     (do-test (weir:3get-vert wer 3) (vec:3vec 32d0 24d0 5d0))))
 
 
-(defun test-weir-kdtree ()
+(defun test-weir3-kdtree ()
   (rnd:set-rnd-state 2)
   (let ((wer (weir:make :dim 3)))
 
@@ -107,12 +99,9 @@
 
 
 
-(defun main ()
-  (test-title (test-weir (weir:make :dim 3)))
-  (test-title (test-weir-with))
-  (test-title (test-weir-split))
-  (test-title (test-weir-kdtree))
+(define-file-tests test-weir3-galore ()
+  (test-title (test-weir3 (weir:make :dim 3)))
+  (test-title (test-weir3-with))
+  (test-title (test-weir3-split))
+  (test-title (test-weir3-kdtree))
   (test-title (test-summary)))
-
-(main)
-

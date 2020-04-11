@@ -1,10 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
+(in-package #:weir-tests)
 
 
 (defun make-line (xy s &optional a)
@@ -49,7 +43,7 @@
   (loop for b in v collect (vec:rot b a :xy xy)))
 
 
-(defun main (size fn)
+(defun %main-plot-cpath (size fn)
   (let ((left 200d0)
         (right 800d0)
         (bs 150d0)
@@ -130,5 +124,6 @@
 
     (draw-svg:save psvg "data/plot-cpath")))
 
-(time (main 1000 (second (cmd-args))))
+(define-file-tests test-plot-cpath ()
+  (time (%main-plot-cpath 1000 (second (cmd-args)))))
 

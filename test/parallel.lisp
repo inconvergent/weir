@@ -1,8 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
+(in-package #:weir-tests)
 
 (defun test-par ()
 
@@ -13,9 +9,6 @@
   )
 
 
-(defun main ()
+(define-file-tests test-parallel ()
   (test-title (test-par))
   (test-title (test-summary)))
-
-(main)
-

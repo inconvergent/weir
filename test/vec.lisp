@@ -1,11 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-
-(defun test-vec ()
+(defun %test-vec ()
 
   (do-test (vec:norm (vec:vec 3.0d0 0.0d0))
            (vec:vec 1.0d0 0.0d0))
@@ -68,7 +63,7 @@
   (do-test (vec:cross (vec:vec 1d0 2d0) (vec:vec 3d0 -7.1d0)) -13.1d0))
 
 
-(defun test-3vec ()
+(defun %test-3vec ()
 
   (do-test (vec:3len (vec:3vec 1d0 1d0 0d0)) 1.4142135623730951d0)
 
@@ -91,10 +86,7 @@
            (list t (list 0.6443375672974073d0 0.3556624327025929d0))))
 
 
-(defun main ()
-  (test-title (test-vec))
-  (test-title (test-3vec))
+(define-file-tests test-vec ()
+  (test-title (%test-vec))
+  (test-title (%test-3vec))
   (test-title (test-summary)))
-
-(main)
-

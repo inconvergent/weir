@@ -22,6 +22,9 @@
   (s 900000d0 :type double-float :read-only nil)
   (pt vec:*3zero* :type vec:3vec :read-only nil))
 
+(weir-utils:define-struct-load-form bvh-node)
+(weir-utils:define-struct-load-form bvh-result)
+
 
 (declaim (inline update-bvh-result))
 (defun update-bvh-result (res s hit pt)

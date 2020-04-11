@@ -1,12 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(rnd:set-rnd-state 1)
-
-(defun test-rnd ()
+(defun %test-rnd ()
   (do-test (length (rnd:rndspace 10 0d0 10d0)) 10)
 
   (do-test
@@ -115,8 +109,6 @@
                  0.04939589836681524d0)))
 
 
-(defun main ()
-  (test-title (test-rnd))
+(define-file-tests test-rnd ()
+  (test-title (%test-rnd))
   (test-title (test-summary)))
-
-(main)

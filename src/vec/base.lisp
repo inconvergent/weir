@@ -17,6 +17,9 @@
 
 #+SBCL(declaim (sb-ext:freeze-type vec 3vec))
 
+(weir-utils:define-struct-load-form vec)
+(weir-utils:define-struct-load-form 3vec)
+
 
 (declaim (inline set!))
 (defun set! (a b)

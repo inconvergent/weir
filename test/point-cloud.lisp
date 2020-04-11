@@ -1,11 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
+(in-package #:weir-tests)
 
 (defun make-data (n s)
   (loop with ls = (print (math:linspace n (- s) s))
@@ -18,7 +11,7 @@
         finally (return res)))
 
 
-(defun test-point-cloud ()
+(defun %test-point-cloud ()
 
   (let* ((data (make-data 10 20d0))
         (ptc (point-cloud:make :data data))
@@ -44,9 +37,6 @@
                   :pt #s(vec:3vec :x 2.2222222222222214d0 :y -20.0d0 :z 2.2222222222222214d0)))))
 
 
-(defun main ()
-  (test-title (test-point-cloud))
+(define-file-tests test-point-cloud ()
+  (test-title (%test-point-cloud))
   (test-title (test-summary)))
-
-(main)
-

@@ -153,3 +153,8 @@
 (defun internal-path-string (path)
   (declare (string path))
   (namestring (asdf:system-relative-pathname :weir path)))
+
+(defmacro define-struct-load-form (struct-name)
+  "Allow the structure named STRUCT-NAME to be dumped to FASL files."
+  `(defmethod make-load-form ((obj ,struct-name) &optional env)
+     (make-load-form-saving-slots obj :environment env)))

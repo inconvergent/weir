@@ -1,13 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
-(defun test-pigment ()
+(defun %test-pigment ()
 
   (do-test (pigment:rgb 0.1d0 1d0 0.5d0)
            #s(pigment:rgba :r 0.1d0 :g 1.0d0 :b 0.5d0 :a 1.0d0))
@@ -69,9 +62,6 @@
            '(0.5d0 1.0d0 1.0d0 1.0d0)))
 
 
-(defun main ()
-  (test-title (test-pigment))
+(define-file-tests test-pigment ()
+  (test-title (%test-pigment))
   (test-title (test-summary)))
-
-(main)
-

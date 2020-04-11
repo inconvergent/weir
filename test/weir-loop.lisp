@@ -1,16 +1,10 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
+(in-package #:weir-tests)
 
 ;(defvar *r* (rnd:rndi 10000))
 
 ;(print *r*)
 
-; TODO: other cases: 8407 4445
-(rnd:set-rnd-state 76)
-
-(defun main (size)
+(defun %test-weir-loop (size)
   (let* ((mid (vec:rep (* 0.5d0 size)))
          (psvg (draw-svg:make* :height size :width size))
          (wer (weir:make)))
@@ -50,6 +44,7 @@
 
     (draw-svg:save psvg "data/weir-loops")))
 
-
-(time (main 600d0))
-
+(define-file-tests test-weir-loop ()
+  ;; TODO: other cases: 8407 4445
+  (rnd:set-rnd-state 76)
+  (time (%test-weir-loop 600d0)))

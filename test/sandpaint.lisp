@@ -1,12 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
+(in-package #:weir-tests)
 
 (defun get-sample-pix (sand)
   (let ((vals (sandpaint::sandpaint-vals sand))
@@ -20,7 +12,7 @@
                           (aref vals (funcall indfx i j 3)))))))
 
 
-(defun test-sandpaint ()
+(defun %test-sandpaint ()
   (let ((sand (sandpaint:make :size 100
                               :fg (pigment:green)
                               :bg (pigment:black))))
@@ -84,9 +76,6 @@
     (sandpaint:save sand "data/sandpaint-circ")))
 
 
-(defun main ()
-  (test-title (test-sandpaint))
+(define-file-tests test-sandpaint ()
+  (test-title (%test-sandpaint))
   (test-title (test-summary)))
-
-(main)
-

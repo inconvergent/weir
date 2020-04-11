@@ -1,12 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(rnd:set-rnd-state 1)
-
-(defun test-graph ()
+(defun %test-graph ()
 
   (let ((grph (graph:make)))
 
@@ -75,9 +69,6 @@
     (do-test (length (graph:get-edges (graph:del-simple-filaments grph))) 3)))
 
 
-(defun main ()
-  (test-title (test-graph))
+(define-file-tests test-graph ()
+  (test-title (%test-graph))
   (test-title (test-summary)))
-
-(main)
-

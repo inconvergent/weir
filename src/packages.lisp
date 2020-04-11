@@ -9,6 +9,7 @@
    #:append-number
    #:append-postfix
    #:cmd-args
+   #:define-struct-load-form
    #:ensure-filename
    #:ensure-vector
    #:internal-path-string

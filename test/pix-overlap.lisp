@@ -1,11 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-
-(rnd:set-rnd-state 1)
-
-(defun main (size)
+(defun %main-pix-overlap (size)
   (let ((wer (weir:make))
         (sand (sandpaint:make :size size
                               :fg (pigment:white 1d0)
@@ -48,12 +43,15 @@
     (sandpaint:save sand "data/pix-overlap")))
 
 
-(require :sb-sprof)
+(define-file-tests test-pix-overlap ()
+  (%main-pix-overlap 300))
+
+
+
+;; (require :sb-sprof)
 ;(sb-sprof:with-profiling (:max-samples 200000
 ;                         :mode :cpu
 ;                         ;:mode :alloc
 ;                         ;:mode :time
 ;                         :report :graph)
-;  (main 300))
-(time (main 300))
-
+;  (%main-pix-overlap 300))

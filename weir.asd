@@ -9,6 +9,7 @@
   :version "3.73.1"
   :author "anders hoff/inconvergent"
   :licence "MIT"
+  :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
   :pathname "src/"
   :serial t
   :depends-on (#:zpng
@@ -79,3 +80,35 @@
                (:file "weir/3vert-utils")
                (:file "weir/alterations")
                (:file "weir/3alterations")))
+
+(asdf:defsystem #:weir/tests
+  :depends-on (#:weir)
+  :perform (asdf:test-op (o s)
+                         (uiop:symbol-call ':weir-tests
+                                           '#:run-tests))
+  :pathname "test/"
+  :serial t
+  :components ((:file "test")
+               (:file "bzspl")
+               (:file "curvature")
+               (:file "graph")
+               (:file "hset")
+               (:file "kdtree")
+               (:file "linear-path")
+               (:file "math")
+               (:file "mesh")
+               (:file "ortho")
+               (:file "parallel")
+               (:file "pigment")
+               (:file "pix-overlap")
+               (:file "plot-cpath")
+               (:file "plot-outline-path")
+               (:file "plot-simplify")
+               (:file "plot")
+               (:file "point-cloud")
+               (:file "rnd")
+               (:file "sandpaint")
+               (:file "vec")
+               (:file "weir-loop")
+               (:file "weir")
+               (:file "weir3")))

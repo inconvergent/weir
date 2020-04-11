@@ -1,12 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
+(in-package #:weir-tests)
 
 (defun get-mdst (ll)
   (loop with res = 1000d0
@@ -35,7 +27,7 @@
   msh)
 
 
-(defun test-mesh ()
+(defun %test-mesh ()
 
   (let ((msh (mesh:make)))
 
@@ -291,11 +283,8 @@
             :z 0.7358510545933247d0)))))))
 
 
-(defun main ()
-  (test-title (test-mesh))
+(define-file-tests test-mesh ()
+  (test-title (%test-mesh))
   (test-title (test-mesh-2))
   (test-title (test-rt))
   (test-title (test-summary)))
-
-(main)
-

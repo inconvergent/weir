@@ -1,10 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(rnd:set-rnd-state 1)
+(in-package #:weir-tests)
 
 (defun test-curve ()
 (let* ((pts (list (vec:vec -20.0d0 99.0d0)
@@ -155,9 +149,6 @@
 
 
 
-(defun main ()
+(define-file-tests test-curvature ()
   (test-title (test-curve))
   (test-title (test-summary)))
-
-(main)
-

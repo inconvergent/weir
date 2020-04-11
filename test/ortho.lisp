@@ -1,14 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
-
-(defun test-ortho ()
+(defun %test-ortho ()
   (let* ((proj (ortho:make :cam (rnd:3on-sphere :rad 1000d0)
                            :look (vec:3rep 0d0)
                            :s 0.3d0
@@ -46,9 +38,6 @@
                (#s(vec:vec :x 661.854180254181d0 :y 485.4092153081456d0) 178.85371424194935d0)))))
 
 
-(defun main ()
-  (test-title (test-ortho))
+(define-file-tests test-ortho ()
+  (test-title (%test-ortho))
   (test-title (test-summary)))
-
-(main)
-
