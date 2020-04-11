@@ -1,0 +1,7 @@
+*.png
+*.svg
+*.dat
+*.obj
+*.mp4
+*.gif
+tmp.lisp
