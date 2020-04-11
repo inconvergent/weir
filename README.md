@@ -96,12 +96,26 @@ Here are some plotted examples:
 
 ## Installation and Dependencies
 
-This code requires `Quicklisp`, `alexandria`, `libpng-dev`, `zpng`, `cl-svg`,
-`inferior-shell`, `cl-png` and `cl-json`. Install by running `install.lisp`.
+This code requires Quicklisp to install dependencies (which are listed in `weir.asd`). To install and load Weir, do:
 
-The path to Quicklisp (https://www.quicklisp.org/beta/) must be set in
-`src/load`. `zpng`, `cl-svg` and `cl-png` are automatically installed via
-`quicklisp`.
+```
+(ql:quickload :weir)
+```
+
+If this does not work, Weir may not be in a place Quicklisp or ASDF can see them. To fix this, either
+
+```
+(load "weir.asd")
+```
+
+or for a longer term solution, push the directory in which Weir sits to the variable `quicklisp:*local-project-directories*`:
+
+```
+;; in your .sbclrc, for example:
+
+#+quicklisp
+(push "/path/to/dir/containing/weir" ql:*local-project-directories*)
+```
 
 The `fn` package (for generating file names) depends on the `fn` command from
 https://github.com/inconvergent/fn, but this is not necessary to use any of the
@@ -132,7 +146,7 @@ Summary:
 
 This code is highly experimental on my part. It is likely to change with no
 warning or explanation. I will keep a note of the version number in
-`src/load.lisp`, but even minor version bumps may contain breaking changes.
+`weir.asd`, but even minor version bumps may contain breaking changes.
 
 
 ## On Use and Contributions
@@ -153,4 +167,3 @@ I would like to thank:
   - https://twitter.com/porglezomp
 
 Who have provided me with useful hints and code feedback.
-

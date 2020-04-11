@@ -1,21 +1,26 @@
+;;; use this to hide compiler notes:
+;;;
+;;; (declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
 
-(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 3)))
+;;; required: (load "~/quicklisp/setup.lisp")
 
-; use this to hide compiler notes:
-;(declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
-
-(load "~/quicklisp/setup.lisp")
-
-(asdf:defsystem "weir"
+(asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
   :version "3.73.1"
   :author "anders hoff/inconvergent"
   :licence "MIT"
+  :pathname "src/"
   :serial t
-  :depends-on ("zpng" "cl-svg" "png" "alexandria" "cl-json" "lparallel"
-               "inferior-shell")
-  :components ((:file "various")
-               (:file "packages")
+  :depends-on (#:zpng
+               #:cl-svg
+               #:png
+               #:alexandria
+               #:cl-json
+               #:lparallel
+               #:inferior-shell)
+  :components ((:file "packages")
+               (:file "config")
+               (:file "various")
                (:file "fn")
                (:file "state")
                (:file "math/math")
@@ -74,7 +79,3 @@
                (:file "weir/3vert-utils")
                (:file "weir/alterations")
                (:file "weir/3alterations")))
-
-(setf *random-state* (make-random-state t))
-(setf *print-pretty* t)
-

@@ -142,7 +142,7 @@
   (let ((mi (bvh-node-mi root))
         (ma (bvh-node-ma root)))
     (format nil "bbox~%  x:~a ~a~%  y:~a ~a~%  z:~a ~a~%"
-            (cl-user::numshow (vec:3vec-x mi)) (cl-user::numshow (vec:3vec-x ma))
-            (cl-user::numshow (vec:3vec-y mi)) (cl-user::numshow (vec:3vec-y ma))
-            (cl-user::numshow (vec:3vec-z mi)) (cl-user::numshow (vec:3vec-z ma)))))
+            (weir-utils:numshow (vec:3vec-x mi)) (weir-utils:numshow (vec:3vec-x ma))
+            (weir-utils:numshow (vec:3vec-y mi)) (weir-utils:numshow (vec:3vec-y ma))
+            (weir-utils:numshow (vec:3vec-z mi)) (weir-utils:numshow (vec:3vec-z ma)))))
 

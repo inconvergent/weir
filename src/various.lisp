@@ -1,3 +1,6 @@
+(in-package #:weir-utils)
+
+(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 3)))
 
 (declaim (type double-float PII PI5))
 
@@ -7,7 +10,7 @@
 
 ;http://cl-cookbook.sourceforge.net/os.html
 (defun cmd-args ()
-  (or #+SBCL *posix-argv*
+  (or #+SBCL sb-ext:*posix-argv*
       #+LISPWORKS system:*line-arguments-list*
       #+CMU extensions:*command-line-words*
       nil))
@@ -150,4 +153,3 @@
 (defun internal-path-string (path)
   (declare (string path))
   (namestring (asdf:system-relative-pathname :weir path)))
-
