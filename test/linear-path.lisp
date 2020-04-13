@@ -1,13 +1,7 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(rnd:set-rnd-state 1)
+(in-package #:weir-tests)
 
 
-(defun test-linear-path ()
+(defun %test-linear-path ()
   (let ((apath (lin-path:make (rnd:nin-rect 33 300d0 300d0))))
     (do-test
       (lin-path:pos* apath (rnd:rndspace 20 0d0 1d0))
@@ -80,9 +74,5 @@
              (vec:vec 201.75690539451068d0 272.4593392134565d0)
              (vec:vec 173.48377006092858d0 -193.41669665923908d0)))))
 
-(defun main ()
-  (test-title (test-linear-path))
-  (test-title (test-summary)))
-
-(main)
-
+(define-file-tests test-linear-path ()
+  (test-title (%test-linear-path)))

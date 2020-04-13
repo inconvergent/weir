@@ -1,11 +1,14 @@
-#!/usr/bin/sbcl --script
+#!/usr/local/bin/sbcl --script
 
-(load "../src/load")
-(asdf:load-system "weir")
+; set your path to sbcl above. i would use env, but it does not appear to work
+; with the --script argument. alternately, delete the shebang and the load
+; below.  and run from repl. let me know if you have a better suggestion for
+; making this easily runnable from terminal
+
+(load "load")
 
 
 (defun main (size fn)
-
   (let ((mid (* 0.5d0 size))
         (repeat 15)
         (grains 3)
@@ -16,7 +19,7 @@
 
     (loop for i in (math:linspace repeat 100d0 900d0)
           for j from 0 to repeat do
-      (print-every j 4)
+      (weir-utils:print-every j 4)
       (let ((wer (weir:make))
             (va (vec:vec 0d0 0d0))
             (vb (vec:vec 0d0 0d0))
@@ -41,5 +44,5 @@
 
     (sandpaint:save sand fn)))
 
-(time (main 1000 (second (cmd-args))))
+(time (main 1000 (second (weir-utils:cmd-args))))
 

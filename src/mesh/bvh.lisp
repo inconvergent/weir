@@ -1,93 +1,94 @@
 
 (in-package :mesh)
 
-(declaim (double-float PII))
+(declaim (double-float *eps*))
+(defparameter *eps* 1d-14)
 
 
-(declaim (inline -make-objects))
-(defun -make-objects (msh vertfx)
+(declaim (inline -make-objects-normals))
+(defun -make-objects-normals (msh vertfx)
   (declare #.*opt-settings* (mesh msh) (function vertfx))
-  (loop for poly of-type list in (get-all-polygons msh)
-        collect (let ((vv (funcall vertfx poly)))
-                  (nconc (list poly vv) (bvh-utils::-bbox vv)))))
-
-(defun make-bvh (msh &key vertfx (num 5) verbose)
-  (declare #.*opt-settings* (mesh msh) (function vertfx) (pos-int num)
-                            (boolean verbose))
-  (labels
-    ((leaf-info (poly vv)
-      (declare (list poly vv))
-      (list poly (apply #'vec::3make-polyx vv)
-                 (apply #'-poly-normal vv)))
-
-     (build (root objs)
-      (declare (bvh-utils::bvh-node root))
-      (destructuring-bind (mi ma)
-        (bvh-utils::-bbox (alexandria:flatten (mapcar #'cddr objs)))
-        (declare (vec:3vec mi ma))
-        (setf (bvh-utils::bvh-node-mi root) mi (bvh-utils::bvh-node-ma root) ma))
-
-      (when (<= (length objs) num)
-            (setf (bvh-utils::bvh-node-leaves root)
-                  (loop for (poly vv mi ma) in objs
-                        collect (leaf-info poly vv)))
-            (return-from build))
-
-      (setf objs (bvh-utils::-axissort objs))
-
-      (let ((mid (ceiling (length objs) 2))
-            (l (bvh-utils::-make-bvh-node))
-            (r (bvh-utils::-make-bvh-node)))
-        (declare (bvh-utils::bvh-node l r) (pos-int mid))
-        (setf (bvh-utils::bvh-node-l root) l (bvh-utils::bvh-node-r root) r)
-        (build l (subseq objs 0 mid))
-        (build r (subseq objs mid)))))
-
-    (let ((root (bvh-utils::-make-bvh-node)))
-      (build root (-make-objects msh vertfx))
-      (when verbose (format t "~a~%" (bvh-utils::node-bbox-info root)))
-      root)))
+  (loop with normals = (make-hash-table :test #'equal)
+        with objs = (list)
+        for poly of-type list in (get-all-polygons msh)
+        do (let ((vv (funcall vertfx poly)))
+             (push (nconc (list poly) (bvh::-bbox vv)) objs)
+             (setf (gethash poly normals) (apply #'-poly-normal vv)))
+        finally (return (values objs normals))))
 
 
-(defun make-bvh-raycaster (bvh &key (resfx #'first))
-  (declare #.*opt-settings* (bvh-utils::bvh-node bvh) (function resfx))
+
+(defun make-bvh (msh &key vertfx (num 5))
+  (declare #.*opt-settings* (mesh msh) (function vertfx) (pos-int num))
+  (multiple-value-bind (objs normals) (-make-objects-normals msh vertfx)
+    (let ((bvh (bvh::make objs
+                          (lambda (poly)
+                            (declare #.*opt-settings* (list poly))
+                            (list poly (apply #'vec::3make-polyx
+                                              (funcall vertfx poly))))
+                          :num num
+                          :bt :mesh)))
+      (setf (bvh:bvh-normals bvh) normals)
+      bvh)))
+
+
+(declaim (inline make-bvhres bvhres-s bvhres-i))
+(defstruct (bvhres)
+  (i *nilpoly* :type list :read-only nil)
+  (s 900000d0 :type double-float :read-only nil)
+  (pt vec:*3zero* :type vec:3vec :read-only nil)
+  (n vec:*3zero* :type vec:3vec :read-only nil))
+
+(weir-utils:define-struct-load-form bvhres)
+
+(declaim (inline -update-result))
+(defun -update-result (res s i pt)
+  (declare #.*opt-settings* (bvhres res) (list i) (double-float s) (vec:3vec))
+  (when (< s (bvhres-s res))
+        (setf (bvhres-s res) s (bvhres-i res) i (bvhres-pt res) pt)
+        nil))
+
+(defun make-raycaster (bvh &key)
+  (declare #.*opt-settings* (bvh:bvh bvh))
   "
-  make raycaster based on the bvh structure.
+  make raycaster based on the bvh structure. returns closest hit.
   "
   (labels
-    ((recursive-raycast (root l org
-                         &key (skip *nilpoly*) boundfx hits)
-      (declare #.*opt-settings* (bvh-utils::bvh-node root) (vec:3vec org l)
-                                (function boundfx) (vector hits))
+    ((recursive-raycast (root org ll &key (skip *nilpoly*) bfx res)
+      (declare #.*opt-settings* (inline) (bvh:node root)
+               (vec:3vec org ll) (function bfx) (bvhres res))
 
-      (unless (funcall boundfx (bvh-utils::bvh-node-mi root)
-                               (bvh-utils::bvh-node-ma root))
+      (unless (funcall bfx (bvh:node-mi root) (bvh:node-ma root))
               (return-from recursive-raycast))
 
-      (let ((leaves (bvh-utils::bvh-node-leaves root)))
+      (let ((leaves (bvh:node-leaves root)))
         (when leaves
-              (loop for (poly polyfx normal) in leaves
-                    do (multiple-value-bind (isect s p)
-                         (funcall (the function polyfx) org l)
-                         (when (and isect (not (equal skip poly)))
-                               (vextend (list s p poly normal) hits))))
+              (loop for (i leaffx) of-type (list function) in leaves
+                    ; TODO: check this more carefully
+                    if (not (equal i skip))
+                    do (multiple-value-bind (isect s pt)
+                         (funcall (the function leaffx) org ll)
+                         (when (and isect (> s *eps*) )
+                               (-update-result res s i pt))))
               (return-from recursive-raycast)))
 
-      (when (bvh-utils::bvh-node-l root)
-            (recursive-raycast (bvh-utils::bvh-node-l root) l org
-                               :skip skip :boundfx boundfx :hits hits))
-      (when (bvh-utils::bvh-node-r root)
-            (recursive-raycast (bvh-utils::bvh-node-r root) l org
-                               :skip skip :boundfx boundfx :hits hits)))
+      (when (bvh:node-l root)
+            (recursive-raycast (bvh:node-l root) org ll :bfx bfx :res res))
+      (when (bvh:node-r root)
+            (recursive-raycast (bvh:node-r root) org ll :bfx bfx :res res)))
 
      (do-raycast (line &key (skip *nilpoly*))
        (declare (list line))
        (let* ((org (first line))
-              (l (apply #'vec:3isub line))
-              (boundfx (bvh-utils::make-line-bbox-test org l))
-              (hits (make-adjustable-vector :type 'vec:3vec)))
-         (recursive-raycast bvh l org :skip skip :boundfx boundfx :hits hits)
-         (funcall resfx (sort (to-list hits) #'< :key #'first)))))
+              (ll (apply #'vec:3isub line))
+              (res (make-bvhres)))
+         (recursive-raycast (bvh:bvh-root bvh) org ll :skip skip
+                            :bfx (bvh:make-line-bbox-test org ll)
+                            :res res)
+         (when (< (bvhres-s res) 900000d0)
+               (setf (bvhres-n res)
+                     (gethash (bvhres-i res) (bvh:bvh-normals bvh))))
+         res)))
 
     #'do-raycast))
 

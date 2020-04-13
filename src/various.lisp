@@ -1,4 +1,9 @@
 
+(in-package #:weir-utils)
+
+(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 3)))
+
+
 (declaim (type double-float PII PI5))
 
 (defconstant PII (the double-float #.(* PI 2d0)))
@@ -7,10 +12,16 @@
 
 ;http://cl-cookbook.sourceforge.net/os.html
 (defun cmd-args ()
-  (or #+SBCL *posix-argv*
+  (or #+SBCL sb-ext:*posix-argv*
       #+LISPWORKS system:*line-arguments-list*
       #+CMU extensions:*command-line-words*
       nil))
+
+;https://github.com/inconvergent/weir/pull/1/commits/4a1df51914800c78cb34e8194222185ebde12388
+(defmacro define-struct-load-form (struct-name)
+  "Allow the structure named STRUCT-NAME to be dumped to FASL files."
+  `(defmethod make-load-form ((obj ,struct-name) &optional env)
+     (make-load-form-saving-slots obj :environment env)))
 
 
 ;from on lisp by pg

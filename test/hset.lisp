@@ -1,10 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(defun test-hset ()
+(defun %test-hset ()
 
   (let ((hs (hset:make)))
 
@@ -35,9 +31,5 @@
 
 
 
-(defun main ()
-  (test-title (test-hset))
-  (test-title (test-summary)))
-
-(main)
-
+(define-file-tests test-hset ()
+  (test-title (%test-hset)))

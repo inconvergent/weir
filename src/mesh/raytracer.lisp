@@ -13,26 +13,6 @@
           (get-all-polygons msh)))
 
 
-(defun make-raycaster (msh &key (vertfx (lambda (poly) (declare (list poly))
-                                          (get-verts msh poly)))
-                                (resfx #'first))
-  (declare #.*opt-settings* (mesh msh) (function vertfx resfx))
-  (let ((poly-fx (-make-poly-fx-tuples msh vertfx)))
-    (declare (list poly-fx))
-    (lambda (line &key (skip *nilpoly*))
-      (declare #.*opt-settings* (list line skip))
-      (loop with org of-type vec:3vec = (first line)
-            with l of-type vec:3vec = (apply #'vec:3isub line)
-            with res of-type list = (list)
-            for (poly fx normal) in poly-fx
-            do (multiple-value-bind (isect s p) (funcall (the function fx) org l)
-                 ;(declare (boolean isect) (vec:3vec p) (double-float s))
-                 (when (and isect (not (equal skip poly)))
-                       (push (list s p poly normal) res)))
-            finally (return (funcall resfx
-                              (sort res #'< :key #'first)))))))
-
-
 (defun make-hidden-fx (msh &key (vertfx (lambda (poly) (declare (list poly))
                                           (get-verts msh poly))))
   (declare (mesh msh) (function vertfx))
@@ -73,8 +53,7 @@
   (declare #.*opt-settings* (function raycastfx)
                             (double-float len) (pos-int num))
   "
-  make simple raytracer. must initiate raycastfx with resfx=#'first.
-  supports bvh-raycaster and (brute force) raycaster.
+  make naive raytracer that traces the path of single rays.
   "
   (labels
     ((raytracer (start)
@@ -86,20 +65,19 @@
             with prev of-type list = *nilpoly*
             for i of-type pos-int from 0 below num
             initially (funcall update (first start))
-            do (let ((isect (funcall raycastfx ray :skip prev)))
-                (declare (list isect))
+            do (let ((hit (funcall raycastfx ray :skip prev)))
+                (declare (bvhres hit))
                 ; nothing happens if there are no ray hits
-                (when (not isect)
+                (when (equal (bvhres-i hit) '(-1 -1 -1))
                       (when (> i 0) (funcall update (second ray)))
                       (return-from raytracer res))
                 ; reflect
-                (destructuring-bind (_ pt new-poly normal) isect
-                  (declare (ignore _) (vec:3vec pt) (list new-poly))
-                  (let ((new-ray (-reflect normal (-make-new-ray ray pt)
-                                           :len len)))
-                    (declare (list new-ray))
-                    (funcall update pt)
-                    (setf ray new-ray prev new-poly))))
+                (let* ((pt (bvhres-pt hit))
+                       (new-ray (-reflect (bvhres-n hit)
+                                  (-make-new-ray ray pt) :len len)))
+                  (declare (list new-ray))
+                  (funcall update pt)
+                  (setf ray new-ray prev (bvhres-i hit))))
             finally (return-from raytracer res))))
     #'raytracer))
 

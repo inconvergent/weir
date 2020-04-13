@@ -94,12 +94,29 @@ Here are some plotted examples:
 
 ## Installation and Dependencies
 
-This code requires `Quicklisp`, `alexandria`, `libpng-dev`, `zpng`, `cl-svg`,
-`inferior-shell`, `cl-png` and `cl-json`. Install by running `install.lisp`.
+This code requires Quicklisp to install dependencies (which are listed in
+`weir.asd`). To install and load Weir, do:
 
-The path to Quicklisp (https://www.quicklisp.org/beta/) must be set in
-`src/load`. `zpng`, `cl-svg` and `cl-png` are automatically installed via
-`quicklisp`.
+
+```
+(ql:quickload :weir)
+```
+
+If this does not work, Weir may not be in a place Quicklisp or ASDF can see
+them. To fix this, either
+
+```
+(load "weir.asd")
+```
+
+or for a longer term solution, push the directory in which Weir sits to the
+variable `quicklisp:*local-project-directories*`:
+
+```
+;; in your .sbclrc, for example:
+#+quicklisp
+(push "/path/to/dir/containing/weir" ql:*local-project-directories*)
+```
 
 The `fn` package (for generating file names) depends on the `fn` command from
 https://github.com/inconvergent/fn, but this is not necessary to use any of the
@@ -110,7 +127,11 @@ The code has only been tested in `Ubuntu 18.04 LTS` with `SBCL 2.0.1`.
 
 ## Tests
 
-See the `test` folder.
+Run:
+
+```
+(asdf:test-system :weir)
+```
 
 
 ## In Case of QL Version Issues
@@ -130,7 +151,7 @@ Summary:
 
 This code is highly experimental on my part. It is likely to change with no
 warning or explanation. I will keep a note of the version number in
-`src/load.lisp`, but even minor version bumps may contain breaking changes.
+`weir.asd`, but even minor version bumps may contain breaking changes.
 
 
 ## On Use and Contributions
@@ -149,9 +170,11 @@ I would like to thank:
   - https://twitter.com/jackrusher
   - https://twitter.com/paulg
   - https://twitter.com/porglezomp
-  - https://twitter.com/stylewarning
 
 Who have provided me with useful hints and code feedback.
 
-Also, https://twitter.com/xach for making https://www.quicklisp.org/beta/.
+The ASDF config and test setup was kindly suggested and implemented by Robert
+Smith (https://twitter.com/stylewarning)
+
+Also, many thanks to https://twitter.com/xach for making Quicklisp.
 

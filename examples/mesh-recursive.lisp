@@ -1,7 +1,11 @@
-#!/usr/bin/sbcl --script
+#!/usr/local/bin/sbcl --script
 
-(load "../src/load")
-(asdf:load-system "weir")
+; set your path to sbcl above. i would use env, but it does not appear to work
+; with the --script argument. alternately, delete the shebang and the load
+; below.  and run from repl. let me know if you have a better suggestion for
+; making this easily runnable from terminal
+
+(load "load")
 
 (parallel:init :cores 8)
 
@@ -23,7 +27,8 @@
 
 ; naive (and slow) recursive raytracer with reflections
 (defun make-renderer (raycast lights &key (depth 10) (rk 0.4d0)
-                                     &aux (invrk (- 1d0 rk)))
+                                     &aux (invrk (- 1d0 rk))
+                                          (white (pigment:white)))
   (labels
     ((do-diffuse (poly n p)
       (declare (list poly) (vec:3vec n p))
@@ -32,8 +37,10 @@
             do (let* ((dir (vec:3norm! (vec:3sub pos p)))
                       (dot (vec:3dot n dir)))
                  (when (and (< 0d0 dot)
-                            (not (funcall raycast
-                                   (list (vec:3from p dir 0.0001d0) pos))))
+                            (equal (mesh:bvhres-i
+                                     (funcall raycast
+                                       (list (vec:3from p dir 0.0001d0) pos)))
+                                   '(-1 -1 -1)))
                        (pigment:safe-clamp!
                          (pigment:non-a-scale-add! res color dot))))
             finally (return res)))
@@ -63,9 +70,10 @@
 
      (raytrace (ray &key (d depth))
        (let ((h (funcall raycast ray)))
-         (if h (destructuring-bind (_ p poly normal) h
-                 (shade poly normal p ray :d d))
-               (pigment:white)))))
+         (if (not (equal (mesh:bvhres-i h) '(-1 -1 -1)))
+             (shade (mesh:bvhres-i h) (mesh:bvhres-n h)
+                    (mesh:bvhres-pt h) ray :d d)
+             white))))
 
     #'raytrace))
 
@@ -86,7 +94,7 @@
 
     (let* ((vertfx (mesh:make-vert-getter msh)) ; vertex accessor
            (bvh (mesh:make-bvh msh :vertfx vertfx :num 3)) ; bvh structure
-           (raycast (mesh:make-bvh-raycaster bvh))
+           (raycast (mesh:make-raycaster bvh))
            (render (make-renderer raycast lights))
            (aa 10) ; samples per pixel. higher is slower
            (raa (/ 1d0 (coerce aa 'double-float)))
@@ -107,5 +115,5 @@
     (sandpaint:save sand fn)))
 
 
-(time (main 1000 (second (cmd-args))))
+(time (main 1000 (second (weir-utils::cmd-args))))
 

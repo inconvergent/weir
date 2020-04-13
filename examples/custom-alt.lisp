@@ -1,8 +1,11 @@
-#!/usr/bin/sbcl --script
+#!/usr/local/bin/sbcl --script
 
-(load "../src/load")
-(asdf:load-system "weir")
+; set your path to sbcl above. i would use env, but it does not appear to work
+; with the --script argument. alternately, delete the shebang and the load
+; below.  and run from repl. let me know if you have a better suggestion for
+; making this easily runnable from terminal
 
+(load "load")
 
 (defun circ-stroke (sand vv)
   (sandpaint:circ sand
@@ -54,5 +57,5 @@
 
     (draw-path sand fn 5000 10d0 (vec:vec 250d0 250d0))))
 
-(time (main 500 (second (cmd-args))))
+(time (main 500 (second (weir-utils:cmd-args))))
 

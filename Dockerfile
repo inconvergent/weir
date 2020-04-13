@@ -14,9 +14,8 @@ RUN sbcl --noinform --load /opt/quicklisp.lisp\
 
 RUN mkdir -p /root/quicklisp &&\
     ln -s /opt/quicklisp/setup.lisp /root/quicklisp/setup.lisp
-ADD install.lisp /opt
-RUN sbcl --script install.lisp
-RUN apt-get remove curl gcc -y &&\
+RUN mkdir -p /opt/data
+RUN apt-get remove curl -y &&\
     apt-get autoremove -y &&\
     apt-get autoclean -y
 
@@ -26,9 +25,9 @@ from base AS build
 WORKDIR /opt
 ADD src /opt/src
 ADD test /opt/test
-ADD utils /opt/utils
+ADD weir.asd /opt
+ADD docker-run-tests.sh /opt
 
-WORKDIR '/opt/test'
+CMD ["bash", "./docker-run-tests.sh"]
 
-ENTRYPOINT ["./run.sh"]
 

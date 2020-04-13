@@ -4,6 +4,7 @@
 (deftype pos-int (&optional (bits 31))
   `(unsigned-byte ,bits))
 
+(deftype 3vec-simple () `(simple-array vec:3vec))
 
 (declaim (fixnum *nilpt*))
 (defvar *nilpt* -1)
@@ -53,14 +54,17 @@
   (vec->pigment (avec:3getv (point-cloud-colors ptc) i) :alpha alpha))
 
 
+(declaim (inline make-point-getter))
 (defun make-point-getter (ptc)
   (declare #.*opt-settings* (point-cloud ptc))
-  (let ((points (point-cloud-points ptc)))
-    (lambda (vv)
-      (typecase vv
-        (cons (mapcar (lambda (i) (declare (pos-int i)) (avec:3getv points i))
-                      (the list vv)))
-        (pos-int (avec:3getv points vv))))))
+  (let* ((n (point-cloud-num-points ptc))
+         (arr (point-cloud-points ptc))
+         (points (loop with res = (make-array n :element-type 'vec:3vec :adjustable nil)
+                       for i from 0 below (get-num-points ptc)
+                       do (setf (aref res i) (avec:3getv arr i))
+                       finally (return res))))
+    (declare (3vec-simple points))
+    (lambda (i) (declare (pos-int i)) (aref points i))))
 
 
 (declaim (inline -center))

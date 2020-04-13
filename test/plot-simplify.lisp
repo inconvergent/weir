@@ -1,13 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
-
-(defun main (size fn)
+(defun %main-plot-simplify (size fn)
   (let ((psvg (draw-svg:make* :width 1000d0
                               :height 1000d0
                               :stroke-width 1d0
@@ -26,5 +19,5 @@
 
     (draw-svg:save psvg "data/plot-simplify")))
 
-(time (main 1000 (second (cmd-args))))
-
+(define-file-tests test-plot-simplify ()
+  (time (%main-plot-simplify 1000 (second (cmd-args)))))

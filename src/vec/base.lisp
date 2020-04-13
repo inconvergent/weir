@@ -15,6 +15,11 @@
                                 (:constructor 3vec (x y z)))
   (z 0d0 :type double-float :read-only nil))
 
+
+(weir-utils:define-struct-load-form vec)
+(weir-utils:define-struct-load-form 3vec)
+
+
 #+SBCL(declaim (sb-ext:freeze-type vec 3vec))
 
 
@@ -51,9 +56,8 @@
     `(defun ,name (,a ,b)
       (declare #.*opt-settings* (vec ,a ,b))
       ,(if inplace
-         `(progn
-            (setf (vec-x ,a) (,@fx (vec-x ,a) (vec-x ,b))
-                  (vec-y ,a) (,@fx (vec-y ,a) (vec-y ,b)))
+         `(progn (setf (vec-x ,a) (,@fx (vec-x ,a) (vec-x ,b))
+                       (vec-y ,a) (,@fx (vec-y ,a) (vec-y ,b)))
             ,a)
          `(vec (,@fx (vec-x ,a) (vec-x ,b))
                (,@fx (vec-y ,a) (vec-y ,b)))))))
@@ -63,9 +67,8 @@
     `(defun ,name (,a ,s)
       (declare #.*opt-settings* (vec ,a) (double-float ,s))
       ,(if inplace
-         `(progn
-            (setf (vec-x ,a) (,@fx (vec-x ,a) ,s)
-                  (vec-y ,a) (,@fx (vec-y ,a) ,s))
+         `(progn (setf (vec-x ,a) (,@fx (vec-x ,a) ,s)
+                       (vec-y ,a) (,@fx (vec-y ,a) ,s))
             ,a)
          `(vec (,@fx (vec-x ,a) ,s)
                (,@fx (vec-y ,a) ,s))))))

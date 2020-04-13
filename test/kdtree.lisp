@@ -1,12 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
+(in-package #:weir-tests)
 
 (defun -dst (verts cand)
   (loop with hit = 0
@@ -27,7 +19,7 @@
         finally (return res)))
 
 
-(defun test-kdtree ()
+(defun %test-kdtree ()
   (let* ((verts (rnd:3nin-cube 100000 500d0))
          (kd (time (kdtree:make verts)))
          (cands (rnd:3nin-cube 10000 500d0)))
@@ -42,9 +34,8 @@
 
 
 
-(defun main ()
-  (test-title (test-kdtree))
-  (test-title (test-summary)))
+(define-file-tests test-kdtree ()
+  (test-title (%test-kdtree)))
 
 
 ;(require :sb-sprof)
@@ -53,6 +44,4 @@
 ;                         ;:mode :alloc
 ;                         :mode :time
 ;                         :report :graph)
-; (main))
-
-(main)
+; (test-kdtree))

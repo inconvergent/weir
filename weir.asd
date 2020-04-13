@@ -1,21 +1,22 @@
 
-(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 3)))
-
-; use this to hide compiler notes:
-;(declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
-
-(load "~/quicklisp/setup.lisp")
-
-(asdf:defsystem "weir"
+(asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "3.73.1"
+  :version "3.80.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
+  :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
+  :pathname "src/"
   :serial t
-  :depends-on ("zpng" "cl-svg" "png" "alexandria" "cl-json" "lparallel"
-               "inferior-shell")
-  :components ((:file "various")
-               (:file "packages")
+  :depends-on (#:zpng
+               #:cl-svg
+               #:png
+               #:alexandria
+               #:cl-json
+               #:lparallel
+               #:inferior-shell)
+  :components ((:file "packages")
+               (:file "config")
+               (:file "various")
                (:file "fn")
                (:file "state")
                (:file "math/math")
@@ -54,7 +55,7 @@
                (:file "draw/draw-svg")
                (:file "distance/zonemap")
                (:file "distance/kdtree")
-               (:file "distance/bvh-utils")
+               (:file "distance/bvh")
                (:file "mesh/mesh")
                (:file "mesh/vert-utils")
                (:file "mesh/shapes")
@@ -66,7 +67,6 @@
                (:file "mesh/raytracer-refract")
                (:file "point-cloud/main")
                (:file "point-cloud/bvh")
-               (:file "point-cloud/raytracer")
                (:file "weir/weir")
                (:file "weir/vert-utils")
                (:file "weir/planar-cycles")
@@ -75,6 +75,35 @@
                (:file "weir/alterations")
                (:file "weir/3alterations")))
 
-(setf *random-state* (make-random-state t))
-(setf *print-pretty* t)
+(asdf:defsystem #:weir/tests
+  :depends-on (#:weir)
+  :perform (asdf:test-op (o s)
+                         (uiop:symbol-call ':weir-tests
+                                           '#:run-tests))
+  :pathname "test/"
+  :serial t
+  :components ((:file "test")
+               (:file "bzspl")
+               (:file "curvature")
+               (:file "graph")
+               (:file "hset")
+               (:file "kdtree")
+               (:file "linear-path")
+               (:file "math")
+               (:file "mesh")
+               (:file "ortho")
+               (:file "parallel")
+               (:file "pigment")
+               (:file "pix-overlap")
+               (:file "plot-cpath")
+               (:file "plot-outline-path")
+               (:file "plot-simplify")
+               (:file "plot")
+               (:file "point-cloud")
+               (:file "rnd")
+               (:file "sandpaint")
+               (:file "vec")
+               (:file "weir-loop")
+               (:file "weir")
+               (:file "weir3")))
 

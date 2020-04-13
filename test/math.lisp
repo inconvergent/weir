@@ -1,11 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-
-(defun test-math ()
+(defun %test-math ()
   (do-test (to-list
              (math:path-tangents (list (vec:vec 1.0d0 2.0d0)
                                        (vec:vec 1.0d0 2.0d0)
@@ -54,9 +49,5 @@
 
 
 
-(defun main ()
-  (test-title (test-math))
-  (test-title (test-summary)))
-
-(main)
-
+(define-file-tests test-math ()
+  (test-title (%test-math)))

@@ -1,11 +1,7 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(setf *print-pretty* t)
+(in-package #:weir-tests)
 
 
-(defun main (size fn)
+(defun %main-plot-outline-path (size fn)
   (let ((psvg (draw-svg:make*)))
 
     (draw-svg:path psvg (cpath:outline (list (vec:vec 100d0 300d0)
@@ -35,5 +31,5 @@
 
     (draw-svg:save psvg "data/plot-outline-path")))
 
-(time (main 1000 (second (cmd-args))))
-
+(define-file-tests test-plot-outline-path ()
+  (time (%main-plot-outline-path 1000 (second (cmd-args)))))

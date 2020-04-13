@@ -1,8 +1,4 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
+(in-package #:weir-tests)
 
 (defun test-bzspl ()
 (let ((pts-a (list (vec:vec -20.0d0 99.0d0)
@@ -132,9 +128,5 @@
     (do-test (bzspl:len (bzspl:make pts-a :closed t)) 275.04416436128014d0)))
 
 
-(defun main ()
-  (test-title (test-bzspl))
-  (test-title (test-summary)))
-
-(main)
-
+(define-file-tests tests-bzspl ()
+  (test-title (test-bzspl)))

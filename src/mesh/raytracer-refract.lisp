@@ -36,6 +36,12 @@
                                                  (num 20))
   (declare #.*opt-settings* (function raycastfx) (boolean include-state)
                             (double-float len) (pos-int num))
+  "
+  make naive refraction raytracer that traces the path of single rays.  this
+  function assumes that the ray starts on the 'outside' of the mesh and
+  switches state if the ray is transmittet (not reflected totally.)
+  is it correct? who knows.
+  "
   (let ((update (if include-state
                     (lambda (res v s)
                       (declare (list res) (vec:3vec v) (symbol s))
@@ -54,23 +60,21 @@
               with prev of-type list = *nilpoly*
               for i of-type pos-int from 0 below num
               initially (setf res (funcall update res (first start) state*))
-              do (let ((isect (funcall raycastfx ray :skip prev)))
-                   (declare (list isect))
+              do (let ((hit (funcall raycastfx ray :skip prev)))
+                   (declare (bvhres hit))
                    ; nothing happens if there are no ray hits
-                   (when (not isect)
+                   (when (equal (bvhres-i hit) '(-1 -1 -1))
                          (when (> i 0)
-                               (setf res
-                                     (funcall update res (second ray) state*)))
+                               (setf res (funcall update res (second ray) state*)))
                          (return-from raytracer res))
                    ; refract or reflect
-                   (destructuring-bind (_ pt new-poly normal) isect
-                     (declare (ignore _))
+                   (let ((pt (bvhres-pt hit)))
                      (multiple-value-bind (new-ray new-state)
-                       (refract-or-reflect normal (-make-new-ray ray pt)
+                       (refract-or-reflect (bvhres-n hit) (-make-new-ray ray pt)
                          :state state* :eta eta :len len)
                        (setf res (funcall update res pt new-state))
                        (setf ray new-ray
-                             prev (sort (the list new-poly) #'<)
+                             prev (sort (the list (bvhres-i hit)) #'<)
                              state* new-state))))
               finally (return-from raytracer res))))
       #'raytracer)))

@@ -1,11 +1,6 @@
-#!/usr/bin/sbcl --script
+(in-package #:weir-tests)
 
-(load "../src/load")
-(asdf:load-system "weir")
-(setf *print-pretty* t)
-
-
-(defun main (size fn)
+(defun %main-plot (size fn)
   (let ((p (list (vec:vec 100d0 100d0) (vec:vec 200d0 100d0)
                  (vec:vec 200d0 200d0)))
         (psvg (draw-svg:make*)))
@@ -61,5 +56,5 @@
 
     (draw-svg:save psvg "data/plot")))
 
-(time (main 1000 (second (cmd-args))))
-
+(define-file-tests test-plot ()
+  (time (%main-plot 1000 (second (cmd-args)))))

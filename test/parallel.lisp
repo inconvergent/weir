@@ -1,21 +1,10 @@
-#!/usr/bin/sbcl --script
-
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
+(in-package #:weir-tests)
 
 (defun test-par ()
-
   (parallel:init)
   (parallel:info)
-  (parallel:end)
-
-  )
+  (parallel:end))
 
 
-(defun main ()
-  (test-title (test-par))
-  (test-title (test-summary)))
-
-(main)
-
+(define-file-tests test-parallel ()
+  (test-title (test-par)))

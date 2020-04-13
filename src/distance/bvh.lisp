@@ -1,34 +1,32 @@
 
-(in-package :bvh-utils)
+(in-package :bvh)
 
 (declaim (double-float *eps* *inveps*))
 (defparameter *eps* 1d-14)
 (defparameter *inveps* (/ *eps*))
 
 
-(declaim (inline -make-bvh-node bvh-node-leaves bvh-node-r
-                 bvh-node-l bvh-node-mi bvh-node-ma))
-(defstruct (bvh-node (:constructor -make-bvh-node))
+(deftype pos-int (&optional (bits 31))
+  `(unsigned-byte ,bits))
+
+
+(declaim (inline -make-node node-leaves node-r node-l node-mi node-ma))
+(defstruct (node (:constructor -make-node))
   (l nil :read-only nil)
   (r nil :read-only nil)
   (leaves nil :type list :read-only nil)
   (mi vec:*3zero* :type vec:3vec :read-only nil)
   (ma vec:*3zero* :type vec:3vec :read-only nil))
 
+(weir-utils:define-struct-load-form node)
 
-(declaim (inline make-bvh-result bvh-result-s bvh-result-hit bvh-result))
-(defstruct (bvh-result)
-  (hit -1 :read-only nil)
-  (s 900000d0 :type double-float :read-only nil)
-  (pt vec:*3zero* :type vec:3vec :read-only nil))
+(declaim (inline -make-bch bvh-root bvh-normals))
+(defstruct (bvh (:constructor -make-bvh))
+  (root nil :type node :read-only t)
+  (bt :none :type symbol :read-only t)
+  (normals nil :read-only nil))
 
-
-(declaim (inline update-bvh-result))
-(defun update-bvh-result (res s hit pt)
-  (declare (bvh-result res) (double-float s) (vec:3vec pt))
-  (when (< s (bvh-result-s res))
-        (setf (bvh-result-s res) s (bvh-result-hit res) hit (bvh-result-pt res) pt)
-        t))
+(weir-utils:define-struct-load-form bvh)
 
 
 (declaim (inline -bbox))
@@ -48,7 +46,7 @@
 (declaim (inline -longaxis))
 (defun -longaxis (objs)
   (declare #.*opt-settings* (list objs))
-  (destructuring-bind (mi ma) (bvh-utils::-bbox (alexandria:flatten (mapcar #'cddr objs)))
+  (destructuring-bind (mi ma) (-bbox (alexandria:flatten (map 'list #'cdr objs)))
     (declare (vec:3vec mi ma))
     (let ((dx (- (vec:3vec-x ma) (vec:3vec-x mi)))
           (dy (- (vec:3vec-y ma) (vec:3vec-y mi)))
@@ -58,15 +56,47 @@
             ((and (>= dy dx) (>= dy dz)) #'vec:3vec-y)
             (t #'vec:3vec-z)))))
 
+
 (declaim (inline -axissort))
 (defun -axissort (objs)
   (declare #.*opt-settings* (list objs))
   (let ((axisfx (-longaxis objs)))
     (declare (function axisfx))
-    ; sort by bbox min: (third o)
-    (sort objs #'< :key (lambda (o) (declare #.*opt-settings* (inline) (list o))
-                          (the double-float (funcall axisfx (third o)))))))
+    ; sort by bbox min: (second o)
+    (sort objs #'< :key (lambda (o) (declare #.*opt-settings* (list o))
+                          (the double-float (funcall axisfx (second o)))))))
 
+
+(defun make (all-objs leaffx &key bt (num 5) verbose)
+  (declare #.*opt-settings* (list all-objs) (function leaffx) (pos-int num)
+                            (symbol bt))
+  (labels
+    ((build (root objs)
+      (declare (node root))
+      (destructuring-bind (mi ma)
+        (-bbox (alexandria:flatten (map 'list #'cdr objs)))
+        (declare (vec:3vec mi ma))
+        (setf (node-mi root) mi (node-ma root) ma))
+
+      (when (<= (length objs) num)
+            (setf (node-leaves root) (loop for (i mi ma) in objs
+                                           collect (funcall leaffx i)))
+            (return-from build))
+
+      (setf objs (-axissort objs))
+
+      (let ((mid (ceiling (length objs) 2))
+            (l (-make-node))
+            (r (-make-node)))
+        (declare (node l r) (pos-int mid))
+        (setf (node-l root) l (node-r root) r)
+        (build l (subseq objs 0 mid))
+        (build r (subseq objs mid)))))
+
+    (let* ((root (-make-node))
+           (res (-make-bvh :root root :bt bt)))
+      (build root all-objs)
+      res)))
 
 (declaim (inline -select-bound))
 (defun -select-bound (org invl mi ma sig axis)
@@ -133,16 +163,16 @@
          (sigy (< (vec:3vec-y invl) 0d0))
          (sigz (< (vec:3vec-z invl) 0d0)))
     (declare (boolean sigx sigy sigz) (vec:3vec invl))
-    (lambda (mi ma) (declare #.*opt-settings* (inline) (vec:3vec mi ma))
+    (lambda (mi ma) (declare #.*opt-settings* (vec:3vec mi ma))
       (-bbox-test org invl sigx sigy sigz mi ma))))
 
 
 (defun node-bbox-info (root)
   (unless root (return-from node-bbox-info nil))
-  (let ((mi (bvh-node-mi root))
-        (ma (bvh-node-ma root)))
+  (let ((mi (node-mi root))
+        (ma (node-ma root)))
     (format nil "bbox~%  x:~a ~a~%  y:~a ~a~%  z:~a ~a~%"
-            (cl-user::numshow (vec:3vec-x mi)) (cl-user::numshow (vec:3vec-x ma))
-            (cl-user::numshow (vec:3vec-y mi)) (cl-user::numshow (vec:3vec-y ma))
-            (cl-user::numshow (vec:3vec-z mi)) (cl-user::numshow (vec:3vec-z ma)))))
+            (numshow (vec:3vec-x mi)) (numshow (vec:3vec-x ma))
+            (numshow (vec:3vec-y mi)) (numshow (vec:3vec-y ma))
+            (numshow (vec:3vec-z mi)) (numshow (vec:3vec-z ma)))))
 

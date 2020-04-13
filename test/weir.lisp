@@ -1,12 +1,5 @@
-#!/usr/bin/sbcl --script
 
-(load "../src/load")
-(asdf:load-system "weir")
-(load "../utils/test")
-
-(setf *print-pretty* t)
-(rnd:set-rnd-state 1)
-
+(in-package #:weir-tests)
 
 (defun test-weir (wer)
 
@@ -341,7 +334,7 @@
     (do-test (weir:get-num-verts wer) 14)
 
     (do-test
-      (to-list (weir::weir-verts wer))
+      (weir-utils:to-list (weir::weir-verts wer))
       (list 0.0d0 2.0d0 2.0d0 3.0d0 3.0d0 4.0d0 4.0d0 7.0d0 5.0d0 4.0d0
             0.0d0 6.0d0 -1.0d0 7.0d0 0.0d0 8.0d0 0.0d0 9.0d0 10.0d0 1.0d0
             3.0d0 1.0d0 1.0d0 10.0d0 8.0d0 5.0d0 7.0d0 11.0d0 0.0d0 0.0d0
@@ -362,7 +355,7 @@
   (do-test (weir:get-num-verts wer) 13)
 
   (do-test
-    (to-list (weir::weir-verts wer))
+    (weir-utils:to-list (weir::weir-verts wer))
 
     (list 0.0d0 2.0d0 2.0d0 3.0d0 3.0d0 4.0d0 4.0d0 7.0d0 5.0d0 4.0d0 0.0d0
           6.0d0 -1.0d0 7.0d0 0.0d0 8.0d0 0.0d0 9.0d0 10.0d0 1.0d0 3.0d0 1.0d0
@@ -589,7 +582,7 @@
               (95 96 97 98) (99 102 101 100 99)))))
 
 
-(defun main ()
+(define-file-tests test-weir-galore ()
   (test-title (test-weir (weir:make)))
   (test-title (test-weir-2 (weir:make)))
   (test-title (test-weir-3 (weir:make)))
@@ -604,8 +597,4 @@
   (test-title (test-weir-itrs))
   (test-title (test-weir-zonemap))
   (test-title (test-weir-grp))
-  (test-title (test-weir-loop))
-  (test-title (test-summary)))
-
-(main)
-
+  (test-title (test-weir-loop)))
