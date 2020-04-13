@@ -174,7 +174,8 @@ I would like to thank:
 Who have provided me with useful hints and code feedback.
 
 The ASDF config and test setup was kindly suggested and implemented by Robert
-Smith (https://twitter.com/stylewarning)
+Smith (https://twitter.com/stylewarning). The remaining weirdness in the test
+system is my fault. Hope to fix it properly later.
 
 Also, many thanks to https://twitter.com/xach for making Quicklisp.
 
