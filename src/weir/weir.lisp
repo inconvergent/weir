@@ -41,10 +41,8 @@
     (weir:with (wer %)
       (% (weir:add-edge? ...)))
 
-  all calls to c inside cwith will cause the alteration inside the c form to be
-  executed. if the form is nil nothing happens.
-
-  this can be more efficient than weir:with in some cases.
+  all (% ...) forms inside the weir context will cause the alteration inside to
+  be executed, and collected. if it is nil, nothing happens.
   "
   (declare (symbol wer accfx))
   (alexandria:with-gensyms (wname kdname zw x res alts do-alts)
@@ -102,8 +100,8 @@
   select an arbitrary edge from a weir instance. the edge will be
   available in the context as i.
 
-  if a grp is supplied it will select an edge from g, otherwise it will
-  use the main grp.
+  if a grp, g, is supplied it will select an edge from g, otherwise it will use
+  the main grp.
   "
   (declare (symbol wer))
   (alexandria:with-gensyms (grp edges grph ln)
@@ -120,8 +118,8 @@
 
 (defmacro with-rnd-vert ((wer i) &body body)
   "
-  select an arbitrary vert from a weir instance. the vert will be
-  available in the context as i.
+  select an arbitrary vert from a weir instance. the vert will be available in
+  the context as i.
   "
   (declare (symbol wer))
   (alexandria:with-gensyms (num)
