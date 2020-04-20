@@ -475,6 +475,7 @@
     #:blood
     #:blue
     #:cmyk
+    #:copy
     #:cyan
     #:dark
     #:from-list
@@ -726,6 +727,7 @@
     #:clear-fx
     #:dens-stroke
     #:get-size
+    #:hsv
     #:lin-path
     #:make
     #:pix
@@ -733,6 +735,7 @@
     #:pix-overlap*
     #:png-open
     #:sample
+    #:sample-bilin
     #:save
     #:set-bg
     #:set-fg

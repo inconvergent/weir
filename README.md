@@ -166,22 +166,20 @@ Here is and example of manipulating a `weir` instance called `wer` using
 
   ; add some data to wer here ...
 
+  ; (% ...) is used to accumulate alterations
+  ; alterations are applied at the end of (weir:with ...)
   (weir:with (wer %)
     ; iterate vertices
     (weir:itr-verts (wer v)
       ; move alteration
-      ; (% ...) is used to accumulate alterations
-      ; they are not performed until the end of (weir:with ...)
       (% (weir:move-vert? v (rnd:in-circ 1d0)))
       ; w will be an arbitrary
       ; vertex in wer
       (weir:with-rnd-vert (wer w)
         ; join v and w if they are closer than d
-        (if (< (weir:edge-length wer v w) d)
-          ; join vertices alteration
-          (% (weir:add-edge? v w)))))
-    ; context end. alterations are applied here.
-    )
+        (when (< (weir:edge-length wer v w) d)
+              ; add edge
+              (% (weir:add-edge? v w)))))))
 ```
 You can define your own arbitrary alterations (functions). There is an example
 of this in `examples/custom-alt.lisp`.
@@ -248,7 +246,8 @@ The `fn` package (for generating file names) depends on the `fn` command from
 https://github.com/inconvergent/fn, but this is not necessary to use any of the
 other packages.
 
-The code has only been tested in `Ubuntu 18.04 LTS` with `SBCL 2.0.1`.
+The code has only been tested in `Ubuntu 18.04 LTS` with `SBCL 2.0.1`. I've
+been told that examples work with `SBCL` in `macOS`.
 
 
 ## Tests

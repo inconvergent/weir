@@ -85,19 +85,6 @@
   (pigment:rgb (aref vals ind) (aref vals (1+ ind)) (aref vals (+ ind 2)) a))
 
 
-(declaim (inline sample))
-(defun sample (sand xy &key (alpha 1d0))
-  (-do-op (sand size vals indfx)
-    (-inside-floor (size xy x y)
-      (let* ((ind (funcall indfx x y))
-             (a (aref vals (+ ind 3))))
-        (declare (pos-int ind) (double-float a))
-        (pigment:rgb (/ (aref vals ind) a)
-                     (/ (aref vals (1+ ind)) a)
-                     (/ (aref vals (+ ind 2)) a)
-                     alpha)))))
-
-
 (declaim (inline set-pix))
 (defun set-pix (sand i j c)
   (declare #.*opt-settings* (pos-int i j) (pigment:rgba c))

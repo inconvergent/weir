@@ -43,6 +43,10 @@ Package was renamed from 'color' because of a package name collision.
   (declare #.*opt-settings* (double-float r g b a))
   (make-rgba :r (* a r) :g (* a g) :b (* a b) :a a))
 
+(declaim (inline copy))
+(defun copy (c)
+  (declare #.*opt-settings* (rgba c))
+  (make-rgba :r (rgba-r c) :g (rgba-g c) :b (rgba-b c) :a (rgba-a c)))
 
 (defun to-list (c)
   (declare #.*opt-settings* (rgba c))
