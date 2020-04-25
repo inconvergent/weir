@@ -67,7 +67,7 @@
                           (the double-float (funcall axisfx (second o)))))))
 
 
-(defun make (all-objs leaffx &key bt (num 5) verbose)
+(defun make (all-objs leaffx &key bt (num 5))
   (declare #.*opt-settings* (list all-objs) (function leaffx) (pos-int num)
                             (symbol bt))
   (labels

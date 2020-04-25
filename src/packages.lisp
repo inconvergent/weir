@@ -486,6 +486,10 @@
     #:mdark
     #:non-a-add
     #:non-a-add!
+    #:non-a-clamp
+    #:non-a-clamp!
+    #:non-a-mult
+    #:non-a-mult!
     #:non-a-scale
     #:non-a-scale!
     #:non-a-scale-add!
@@ -721,6 +725,8 @@
   (:use #:common-lisp)
   (:export
     #:bzspl-stroke
+    #:cafx-expt
+    #:cafx-lin
     #:chromatic-aberration
     #:circ
     #:clear

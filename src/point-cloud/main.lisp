@@ -59,7 +59,9 @@
   (declare #.*opt-settings* (point-cloud ptc))
   (let* ((n (point-cloud-num-points ptc))
          (arr (point-cloud-points ptc))
-         (points (loop with res = (make-array n :element-type 'vec:3vec :adjustable nil)
+         (points (loop with res = (make-array n :element-type 'vec:3vec
+                                                :adjustable nil
+                                                :initial-element (vec:3zero))
                        for i from 0 below (get-num-points ptc)
                        do (setf (aref res i) (avec:3getv arr i))
                        finally (return res))))

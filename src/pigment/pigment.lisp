@@ -28,25 +28,26 @@ Package was renamed from 'color' because of a package name collision.
       (progn ,@body))))
 
 
-(declaim (inline make-rgba rgba-r rgba-g rgba-b rgba-a))
-(defstruct (rgba)
+(declaim (inline make-rgba -make-rgba rgba-r rgba-g rgba-b rgba-a))
+(defstruct (rgba (:constructor make-rgba) (:constructor -make-rgba (r g b a)))
   (r 0d0 :type double-float :read-only nil)
   (g 0d0 :type double-float :read-only nil)
   (b 0d0 :type double-float :read-only nil)
   (a 1d0 :type double-float :read-only nil))
 
 (weir-utils:define-struct-load-form rgba)
+#+SBCL(declaim (sb-ext:freeze-type rgba))
 
 
 (declaim (inline make))
 (defun make (r g b &optional (a 1d0))
   (declare #.*opt-settings* (double-float r g b a))
-  (make-rgba :r (* a r) :g (* a g) :b (* a b) :a a))
+  (-make-rgba (* a r) (* a g) (* a b) a))
 
 (declaim (inline copy))
 (defun copy (c)
   (declare #.*opt-settings* (rgba c))
-  (make-rgba :r (rgba-r c) :g (rgba-g c) :b (rgba-b c) :a (rgba-a c)))
+  (-make-rgba (rgba-r c) (rgba-g c) (rgba-b c) (rgba-a c)))
 
 (defun to-list (c)
   (declare #.*opt-settings* (rgba c))
@@ -108,34 +109,30 @@ Package was renamed from 'color' because of a package name collision.
 (declaim (inline scale))
 (defun scale (c s)
   (declare #.*opt-settings* (rgba c) (double-float s))
-  (make-rgba :r (* (rgba-r c) s)
-             :g (* (rgba-g c) s)
-             :b (* (rgba-b c) s)
-             :a (* (rgba-a c) s)))
+  (-make-rgba (* (rgba-r c) s) (* (rgba-g c) s)
+              (* (rgba-b c) s) (* (rgba-a c) s)))
 
 (declaim (inline scale!))
 (defun scale! (c s)
   (declare #.*opt-settings* (rgba c) (double-float s))
-  (setf (rgba-r c) (* (rgba-r c) s)
-        (rgba-g c) (* (rgba-g c) s)
-        (rgba-b c) (* (rgba-b c) s)
-        (rgba-a c) (* (rgba-a c) s))
+  (setf (rgba-r c) (* (rgba-r c) s) (rgba-g c) (* (rgba-g c) s)
+        (rgba-b c) (* (rgba-b c) s) (rgba-a c) (* (rgba-a c) s))
   c)
 
 
 (declaim (inline safe-clamp))
 (defun safe-clamp (c)
+  (declare #.*opt-settings* (rgba c))
   "clamp between 0, a, since we use pre-mult alpha"
   (let ((a (rgba-a c)))
     (declare (double-float a))
-    (make-rgba :r (min a (max 0d0 (rgba-r c)))
-               :g (min a (max 0d0 (rgba-g c)))
-               :b (min a (max 0d0 (rgba-b c)))
-               :a a)
+    (-make-rgba (min a (max 0d0 (rgba-r c))) (min a (max 0d0 (rgba-g c)))
+                (min a (max 0d0 (rgba-b c))) a)
     c))
 
 (declaim (inline safe-clamp!))
 (defun safe-clamp! (c)
+  (declare #.*opt-settings* (rgba c))
   "clamp between 0, a, since we use pre-mult alpha"
   (let ((a (rgba-a c)))
     (declare (double-float a))
@@ -143,6 +140,4 @@ Package was renamed from 'color' because of a package name collision.
           (rgba-g c) (min a (max 0d0 (rgba-g c)))
           (rgba-b c) (min a (max 0d0 (rgba-b c))))
     c))
-
-
 

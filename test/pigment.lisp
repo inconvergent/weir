@@ -42,7 +42,6 @@
                            :b 0.03200000000000001d0
                            :a 0.04000000000000001d0))
 
-  ;TODO: deal with alpha in add
   (do-test (pigment:safe-clamp!
              (pigment:non-a-add (pigment:rgb 0.8d0 0.8d0 0.8d0 0.4d0)
                           (pigment:red)))
