@@ -86,10 +86,8 @@ Main components:
 
      ; edges are represented as lists of verts, and they are always
      ; sorted with the smallest vert index first, so both
-     (weir:edge-exists wer '(0 1))
-     ; and
-     (weir:edge-exists wer '(1 0))
-     ; returns t
+     (weir:edge-exists wer '(0 1)) ; and
+     (weir:edge-exists wer '(1 0)) ; returns t
 
      ; get edges incident to vert 0
      (weir:get-incident-edges wer 0))
@@ -121,6 +119,13 @@ Main components:
 
      ; pick a random point between points va and vb
      (rnd:on-line va vb)
+
+     ; do something with a certain probability
+     ; second form is optional
+     (rnd:prob 0.1d0 (print "10% hi") (print "90% oh no"))
+
+     ; perform either form 1 or 2
+     (rnd:either (print "form 1") (print "form 2"))
    ```
 
 4. Orthogonal projection `ortho`:
@@ -141,12 +146,22 @@ Main components:
                         :look (vec:3rep 79d0)))
    ```
 
-5. A tool for drawing `pngs` called `sandpaint`. This package uses random
-   sampling to draw. This creates a fairly distinct and gritty look in many
-   cases.
-
-6. A tool for drawing `svg` files: `draw-svg`. Mainly files that are good for
+5. A tool for drawing `svg` files: `draw-svg`. Mainly files that are good for
    plotting.
+   ```lisp
+   (let ((psvg (draw-svg:make :stroke "black"))
+         (pts (list (vec:vec 10d0 20d0) (vec:vec 20d0 30d0)
+                    (vec:vec 10d0 50d0))))
+     ; sw is the stroke width
+     (draw-svg:path psvg pts :sw 3d0)
+     (draw-svg:bzspl psvg pts :sw 3d0 :so 0.5d0)
+     (draw-svg:circ psvg (vec:rep 30d0) 10d0 :sw 3d0 :stroke "red")
+     (draw-svg:save psvg "filename"))
+   ```
+
+6. A tool for drawing `pngs` called `sandpaint`. This package uses random
+   sampling to draw. This creates a fairly distinct and gritty look in many
+   cases. Also supports direct pixel manipulations and a few filters.
 
 7. Some simple raytracing functionality for triangle meshes `mesh` and point
    clouds `point-cloud`. This is immature and slow.
