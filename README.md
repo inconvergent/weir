@@ -59,7 +59,49 @@ Main components:
    ```
    See the code in the package for more details.
 
-2. A simple graph data structure, `weir`, for working with vertices and edges.
+2. Random numbers, some examples:
+   ```lisp
+   ; random double 0d0 and a (default: 1d0)
+   (rnd:rnd a)
+
+   ; ditto, between -a and a
+   (rnd:rnd* a)
+
+   ; between a and b
+   (rnd:rndrng a b)
+
+   ; random fixnum
+   (rnd:rndi 10)
+
+   ; return n random numbers between a and b
+   (rnd:rndspace n a b)
+
+   ; random number from normal distribution
+   (rnd:norm :mu 0d0 :sigma 1d0)
+
+   ; uniform in circle of radius a at centered at p
+   (rnd:in-circ a :xy p)
+
+   ; uniform numbers in a rectangle
+   (rnd:in-rect w h :xy p)
+
+   ; pick a random point between points va and vb
+   (rnd:on-line va vb)
+
+   ; ececute a form with a certain probability
+   ; second form is optional
+   (rnd:prob 0.1d0 (print "10% hi") (print "90% oh no"))
+
+   ; perform either form 1 or 2
+   (rnd:either (print "form 1") (print "form 2"))
+
+   ; repeat the form at most n-1 times
+   (rnd:rep n (print 1))
+   ```
+   There are also some utils for random 3d vector numbers, see
+   `src/rnd/3rnd.lisp`.
+
+3. A simple graph data structure, `weir`, for working with vertices and edges.
    The structure is combined with a programming pattern for applying changes to
    the structure. The pattern relies on `alterations`, see below. You can also
    manipulate the structure directly.
@@ -94,15 +136,13 @@ Main components:
    ```
    See the `examples` folder for more.
 
-3. A series of other useful data structures and tools. E.g. a package for
-   generating different kinds of random numbers (`rnd`), as well as tools for
+4. A series of other useful data structures and tools. E.g. a package for
    handling colors (`pigment`), splines (`bzspl`), and various vector and path
    functionality. Eg. `math`, `lin-path` and `simplify-path`.
    ```lisp
    (let* ((points (rnd:nin-circ 5 400d0))
           (bz (bzspl:make points))
           (lp (lin-path:make points)))
-
      ; sample a point on the spline
      (bzspl:pos bz (rnd:rnd))
      ; sample a point on path
@@ -111,24 +151,17 @@ Main components:
      ; represent the spline with a limited number of points
      (bzspl:adaptive-pos bz :lim 1d0))
 
-     ; return n numbers between a and b inclusive
-     (math:linspace n a b :end t)
+   ; return n numbers evenly spaced between a and b, inclusive
+   (math:linspace n a b :end t)
 
-     ; return n random numbers between a and b
-     (rnd:rndspace n a b)
+   ; all fixnums from a to b-1
+   (math:range a b)
 
-     ; pick a random point between points va and vb
-     (rnd:on-line va vb)
-
-     ; do something with a certain probability
-     ; second form is optional
-     (rnd:prob 0.1d0 (print "10% hi") (print "90% oh no"))
-
-     ; perform either form 1 or 2
-     (rnd:either (print "form 1") (print "form 2"))
+   ; repeat the form n times
+   (math:nrep n (rnd:rnd))
    ```
 
-4. Orthogonal projection `ortho`:
+5. Orthogonal projection `ortho`:
    ```lisp
    (let ((proj (ortho:make :s 1d0
                            :xy (vec:rep 500d0)
@@ -146,7 +179,7 @@ Main components:
                         :look (vec:3rep 79d0)))
    ```
 
-5. A tool for drawing `svg` files: `draw-svg`. Mainly files that are good for
+6. A tool for drawing `svg` files: `draw-svg`. Mainly files that are good for
    plotting.
    ```lisp
    (let ((psvg (draw-svg:make :stroke "black"))
@@ -159,11 +192,11 @@ Main components:
      (draw-svg:save psvg "filename"))
    ```
 
-6. A tool for drawing `pngs` called `sandpaint`. This package uses random
+7. A tool for drawing `pngs` called `sandpaint`. This package uses random
    sampling to draw. This creates a fairly distinct and gritty look in many
    cases. Also supports direct pixel manipulations and a few filters.
 
-7. Some simple raytracing functionality for triangle meshes `mesh` and point
+8. Some simple raytracing functionality for triangle meshes `mesh` and point
    clouds `point-cloud`. This is immature and slow.
 
 

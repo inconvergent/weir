@@ -77,6 +77,7 @@
   (loop repeat n collect (rndrng a b) of-type double-float))
 
 
+; https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
 (declaim (inline norm))
 (defun norm (&key (mu 0d0) (sigma 1d0))
   "box-muller transform"
@@ -99,15 +100,16 @@
 
 
 (defmacro either (a b)
-  "excecutes either a or b with a probablility of 0.5"
+  "excecutes either a or b, with a probablility of 0.5"
   `(prob 0.5d0 ,a ,b))
 
 
 (defmacro rcond (&rest clauses)
   "
-  executes the forms in clauses according to the weighted sum of all p1, p2 ...
+  executes the forms in clauses according to the weighted sum of
+  all p1, p2 ...
   clauses should be on this form:
-    ((p1 form) (p2 form))
+    ((p1 form) (p2 form) ...)
   "
   (alexandria:with-gensyms (val)
     (let* ((tot 0d0)
@@ -146,15 +148,14 @@
 
 ; GENERIC
 
-;(declaim (inline rndget))
 (defun rndget (l)
-  (declare (sequence l))
+  (declare #.*opt-settings* (sequence l))
   (if (eql (type-of l) 'cons) (nth (rndi (length l)) l)
                               (aref l (rndi (length l)))))
 
 (declaim (inline probsel))
 (defun probsel (p a &aux (a* (ensure-vector a)))
-  (declare (sequence a) (double-float p))
+  (declare #.*opt-settings* (sequence a) (double-float p))
   (loop with res of-type vector = (make-adjustable-vector)
         for e across a*
         do (prob p (vextend e res))
@@ -176,14 +177,13 @@
 
 (declaim (inline rndspacei))
 (defun rndspacei (n a b &key order &aux (d (- b a)))
-  (declare (fixnum n a b d))
+  (declare #.*opt-settings* (fixnum n a b d))
   (if order (sort (-nrep n (+ a (rndi d))) #'<)
             (-nrep n (+ a (rndi d)))))
 
 
 (declaim (inline bernoulli))
 (defun bernoulli (n p)
-  (declare (fixnum n) (double-float p))
-  (loop repeat n
-        collect (prob p 1d0 0d0) of-type double-float))
+  (declare #.*opt-settings* (fixnum n) (double-float p))
+  (loop repeat n collect (prob p 1d0 0d0) of-type double-float))
 
