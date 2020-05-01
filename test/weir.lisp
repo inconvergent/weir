@@ -380,24 +380,21 @@
         (% (weir:move-vert? v (vec:vec 2d0 2d0)))))
 
     (do-test
-      (sort (alexandria:flatten (weir:itr-verts (wer i :collect t) i)) #'<)
+      (sort (weir:itr-verts (wer i :collect t) i) #'<)
       '(0 1 2 3 4 5 6 7 8 9 10 11))
 
-    (do-test
-      (alexandria:flatten (weir:itr-verts (wer i) i))
-      nil)
+    (do-test (weir:itr-verts (wer i) i) nil)
 
     (do-test
-      (sort (alexandria:flatten (weir:itr-grp-verts (wer i :collect t) i)) #'<)
+      (sort (weir:itr-grp-verts (wer i :collect t) i) #'<)
       '(0 1 2 3 5 6 7 11))
 
     (do-test
       (weir:itr-edges (wer e :collect t) e)
-      '(((5 11)) ((5 6)) ((3 7)) ((0 1)) ((1 3)) ((1 2))))
+      '((5 11) (5 6) (3 7) (0 1) (1 3) (1 2)))
 
     (do-test
-      (sort (alexandria:flatten
-              (weir:itr-edges (wer e :collect t) (weir:ledge-length wer e))) #'<)
+      (sort (weir:itr-edges (wer e :collect t) (weir:ledge-length wer e)) #'<)
       '(1.0d0 1.4142135623730951d0 2.23606797749979d0 3.1622776601683795d0
         4.123105625617661d0 4.47213595499958d0))
 
@@ -500,16 +497,13 @@
       (weir:ladd-edge! wer '(3 2) :g g2)
       (weir:ladd-edge! wer '(1 5) :g g3)
 
-      (do-test (sort (alexandria:flatten
-                       (weir:itr-grp-verts (wer i :g g2 :collect t) i)) #'<)
+      (do-test (sort (weir:itr-grp-verts (wer i :g g2 :collect t) i) #'<)
                '(1 2 3))
 
-      (do-test (sort (alexandria:flatten
-                       (weir:itr-grp-verts (wer i :g nil :collect t) i)) #'<)
+      (do-test (sort (weir:itr-grp-verts (wer i :g nil :collect t) i) #'<)
                '(1 2))
 
-      (do-test (sort (alexandria:flatten
-                       (weir:itr-edges (wer e :g g1 :collect t) e)) #'<) '(1 2))
+      (do-test (sort (alexandria:flatten (weir:itr-edges (wer e :g g1 :collect t) e)) #'<) '(1 2))
 
       (do-test (sort (weir:get-vert-inds wer :g g1) #'<) '(1 2))
 

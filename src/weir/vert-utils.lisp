@@ -225,7 +225,7 @@
       (let ((mx (* 0.5d0 (+ minx maxx)))
             (my (* 0.5d0 (+ miny maxy))))
         (declare (double-float mx my))
-        (itr-verts (wer v) (-center verts v xy mx my) :collect nil)
+        (itr-verts (wer v) (-center verts v xy mx my))
         (vec:vec mx my)))))
 
 
@@ -263,7 +263,7 @@
   (build-zonemap wer rad)
   (let ((c 0))
     (declare (pos-int c))
-    (itr-verts (wer v :collect nil)
+    (itr-verts (wer v)
       (loop with verts of-type (simple-array double-float) = (weir-verts wer)
             with near of-type list =
               (to-list (remove-if (lambda (x)

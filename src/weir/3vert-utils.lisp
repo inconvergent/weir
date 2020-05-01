@@ -171,7 +171,7 @@
   "
   (declare #.*opt-settings* (weir wer) (double-float lim) (function fx))
   (-3dimtest wer)
-  (itr-edges (wer e :collect t)
+  (itr-edges (wer e)
     (when (funcall (the function fx) (3ledge-length wer e) lim)
           (ldel-edge! wer e))))
 
@@ -196,7 +196,7 @@
             (my (* 0.5d0 (+ miny maxy)))
             (mz (* 0.5d0 (+ minz maxz))))
         (declare (double-float mx my mz))
-        (itr-verts (wer v) (-3center verts v xy mx my mz) :collect nil)
+        (itr-verts (wer v) (-3center verts v xy mx my mz))
         (vec:3vec mx my mz)))))
 
 
@@ -274,7 +274,7 @@
   (3build-kdtree wer)
   (let ((c 0))
     (declare (pos-int c))
-    (itr-verts (wer v :collect nil)
+    (itr-verts (wer v)
       (loop with verts of-type (simple-array double-float) = (weir-verts wer)
             with near of-type list =
                 (to-list (remove-if (lambda (x)

@@ -137,7 +137,7 @@
     `(let ((,wname ,wer))
       (loop for ,i of-type pos-int from 0 below (weir-num-verts ,wname)
             ,(if collect 'collect 'do)
-              (,(if collect 'list 'progn) ,@body)))))
+              (progn ,@body)))))
 
 
 (defmacro itr-grp-verts ((wer i &key g collect) &body body)
@@ -157,7 +157,7 @@
       (with-grp (,wname ,grp ,g)
         (map ',(if collect 'list 'nil)
              (lambda (,i) (declare (pos-int ,i))
-               (,(if collect 'list 'progn) ,@body))
+               (progn ,@body))
              (graph:get-verts (grp-grph ,grp)))))))
 
 
@@ -172,7 +172,7 @@
       (let ((,grph (grp-grph ,grp)))
         (map ',(if collect 'list 'nil)
              (lambda (,i)
-               (,(if collect 'list 'progn) ,@body))
+               (progn ,@body))
              (graph:get-edges ,grph))))))
 
 ; TODO: this is slower for some reason
@@ -259,7 +259,7 @@
         (loop for ,g being the hash-keys of ,grps
           if (or ,main* ,g)
           ,(if collect 'collect 'do)
-          (,(if collect 'list 'progn) ,@body))))))
+          (progn ,@body))))))
 
 
 (defun -make-hash-table (&key init (test #'equal))
