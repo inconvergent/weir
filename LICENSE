@@ -11,7 +11,7 @@ to use the code in any nonprofit activity, or distribute free
 verbatim copies (including this notice), is encouraged to do so.
 ---
 
-2. Some modified code by Victor Anyakin in (in src/aux/dat.lisp):
+2. Some modified code by Victor Anyakin in (in src/auxiliary/dat.lisp):
 
 ---
 Copyright (c) 2013-2018 Victor Anyakin <anyakinvictor@yahoo.com>
@@ -40,7 +40,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 
-3. Some code suggested by @lispm (in src/aux/dat.lisp, src/various.lisp). There
+3. Some code suggested by @lispm (in src/auxiliary/dat.lisp, src/various.lisp). There
 are links to the original suggestions
 
 4. The Utah Teapot is included in examples/teapot.obj.

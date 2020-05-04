@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "3.83.0"
+  :version "3.83.2"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -46,7 +46,7 @@
                (:file "graph/paths")
                (:file "graph/edge-set")
                (:file "graph/mst-cycle")
-               (:file "aux/dat")
+               (:file "auxiliary/dat")
                (:file "gridfont/main")
                (:file "draw/bzspl")
                (:file "draw/lin-path")

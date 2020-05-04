@@ -199,8 +199,7 @@
   "
   remove edges longer than lim, use fx #'< to remove edges shorter than lim.
   "
-  (declare #.*opt-settings*
-           (weir wer) (double-float lim) (function fx))
+  (declare #.*opt-settings* (weir wer) (double-float lim) (function fx))
   (-dimtest wer)
   (itr-edges (wer e)
     (when (funcall (the function fx) (ledge-length wer e) lim)
@@ -208,12 +207,21 @@
 
 
 (declaim (inline -center))
-(defun -center (verts v xy mx my)
+(defun -center (verts v mid mx my &key (s 1d0))
+  (declare #.*opt-settings* (type (simple-array double-float) verts)
+           (pos-int v) (vec:vec mid) (double-float mx my s))
   (avec:with-vec (verts v x y)
-    (setf x (+ (vec:vec-x xy) (- x mx))
-          y (+ (vec:vec-y xy) (- y my)))))
+    (setf x (+ (vec:vec-x mid) (* s (- x mx)))
+          y (+ (vec:vec-y mid) (* s (- y my))))))
 
-(defun center! (wer &key (xy vec:*zero*))
+(declaim (inline -scale-by))
+(defun -scale-by (max-side sx sy)
+  (declare #.*opt-settings* (double-float sx sy))
+  (cond ((not max-side) 1d0)
+        ((> sx sy) (/ (the double-float max-side) sx))
+        (t (/ (the double-float max-side) sy))))
+
+(defun center! (wer &key (xy vec:*zero*) max-side)
   "
   center the verts of wer on xy. returns the previous center.
   "
@@ -223,25 +231,24 @@
              (pos-int num-verts))
     (multiple-value-bind (minx maxx miny maxy) (avec:minmax verts num-verts)
       (let ((mx (* 0.5d0 (+ minx maxx)))
-            (my (* 0.5d0 (+ miny maxy))))
+            (my (* 0.5d0 (+ miny maxy)))
+            (s (-scale-by max-side (- maxx minx) (- maxy miny))))
         (declare (double-float mx my))
-        (itr-verts (wer v) (-center verts v xy mx my))
-        (vec:vec mx my)))))
+        (itr-verts (wer v) (-center verts v xy mx my :s s))
+        (values (vec:vec mx my) s)))))
 
 
 (defun build-zonemap (wer rad)
   (declare (weir wer) (double-float rad))
   (-dimtest wer)
-  (setf (weir-zonemap wer) (zonemap:make (weir-verts wer)
-                                         (weir-num-verts wer)
-                                         rad)))
+  (setf (weir-zonemap wer)
+        (zonemap:make (weir-verts wer) (weir-num-verts wer) rad)))
 
 
 (declaim (inline -is-rel-neigh))
 (defun -is-rel-neigh (verts u v near)
-  (declare #.*opt-settings*
-           (type (simple-array double-float) verts) (pos-int u v)
-           (list near))
+  (declare #.*opt-settings* (type (simple-array double-float) verts)
+                            (pos-int u v) (list near))
   (loop with d of-type double-float = (avec:dst2 verts verts u v)
         for w of-type pos-int in near
         if (not (> (the double-float

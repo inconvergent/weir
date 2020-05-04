@@ -177,13 +177,23 @@
 
 
 (declaim (inline -3center))
-(defun -3center (verts v xy mx my mz)
+(defun -3center (verts v mid mx my mz &key (s 1d0))
+  (declare #.*opt-settings* (type (simple-array double-float) verts)
+           (pos-int v) (vec:vec mid) (double-float mx my my s))
   (avec:3with-vec (verts v x y z)
-    (setf x (+ (vec:3vec-x xy) (- x mx))
-          y (+ (vec:3vec-y xy) (- y my))
-          z (+ (vec:3vec-z xy) (- z mz)))))
+    (setf x (+ (vec:3vec-x mid) (* s (- x mx)))
+          y (+ (vec:3vec-y mid) (* s (- y my)))
+          z (+ (vec:3vec-z mid) (* s (- z mz))))))
 
-(defun 3center! (wer &key (xy vec:*3zero*))
+(declaim (inline -scale-by))
+(defun -3scale-by (max-side sx sy sz)
+  (declare #.*opt-settings* (double-float sx sy sz))
+  (cond ((not max-side) 1d0)
+        ((and (> sx sy) (> sx sz)) (/ (the double-float max-side) sx))
+        ((and (> sy sx) (> sy sz)) (/ (the double-float max-side) sy))
+        (t (/ (the double-float max-side) sz))))
+
+(defun 3center! (wer &key (xy vec:*3zero*) max-side)
   "
   center the verts of wer on xy. returns the previous center.
   "
@@ -191,13 +201,16 @@
   (with-struct (weir- verts num-verts) wer
     (declare (type (simple-array double-float) verts)
              (pos-int num-verts))
-    (multiple-value-bind (minx maxx miny maxy minz maxz) (avec:3minmax verts num-verts)
+    (multiple-value-bind (minx maxx miny maxy minz maxz)
+      (avec:3minmax verts num-verts)
       (let ((mx (* 0.5d0 (+ minx maxx)))
             (my (* 0.5d0 (+ miny maxy)))
-            (mz (* 0.5d0 (+ minz maxz))))
+            (mz (* 0.5d0 (+ minz maxz)))
+            (s (-3scale-by max-side
+                 (- maxx minx) (- maxy miny) (- maxz minz))))
         (declare (double-float mx my mz))
-        (itr-verts (wer v) (-3center verts v xy mx my mz))
-        (vec:3vec mx my mz)))))
+        (itr-verts (wer v) (-3center verts v xy mx my mz :s s))
+        (values (vec:3vec mx my mz) s)))))
 
 
 (defun 3add-path! (wer points &key g closed)
