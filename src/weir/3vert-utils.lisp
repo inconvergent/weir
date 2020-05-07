@@ -193,7 +193,7 @@
         ((and (> sy sx) (> sy sz)) (/ (the double-float max-side) sy))
         (t (/ (the double-float max-side) sz))))
 
-(defun 3center! (wer &key (xy vec:*3zero*) max-side)
+(defun 3center! (wer &key (xy vec:*3zero*) max-side (non-edge t))
   "
   center the verts of wer on xy. returns the previous center.
   "
@@ -202,15 +202,18 @@
     (declare (type (simple-array double-float) verts)
              (pos-int num-verts))
     (multiple-value-bind (minx maxx miny maxy minz maxz)
-      (avec:3minmax verts num-verts)
+      (if non-edge (avec:3minmax verts num-verts)
+                   (avec::3minmax* verts (get-vert-inds wer :g g)))
       (let ((mx (* 0.5d0 (+ minx maxx)))
             (my (* 0.5d0 (+ miny maxy)))
             (mz (* 0.5d0 (+ minz maxz)))
-            (s (-3scale-by max-side
-                 (- maxx minx) (- maxy miny) (- maxz minz))))
+            (w (- maxx minx))
+            (h (- maxy miny))
+            (d (- maxz minz)   )
+            (s (-3scale-by max-side w h d)))
         (declare (double-float mx my mz))
         (itr-verts (wer v) (-3center verts v xy mx my mz :s s))
-        (values (vec:3vec mx my mz) s)))))
+        (values (vec:3vec mx my mz) (vec:3vec w h d) s)))))
 
 
 (defun 3add-path! (wer points &key g closed)

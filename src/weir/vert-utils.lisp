@@ -221,7 +221,7 @@
         ((> sx sy) (/ (the double-float max-side) sx))
         (t (/ (the double-float max-side) sy))))
 
-(defun center! (wer &key (xy vec:*zero*) max-side)
+(defun center! (wer &key (xy vec:*zero*) max-side (non-edge t) g)
   "
   center the verts of wer on xy. returns the previous center.
   "
@@ -229,13 +229,65 @@
   (with-struct (weir- verts num-verts) wer
     (declare (type (simple-array double-float) verts)
              (pos-int num-verts))
-    (multiple-value-bind (minx maxx miny maxy) (avec:minmax verts num-verts)
-      (let ((mx (* 0.5d0 (+ minx maxx)))
-            (my (* 0.5d0 (+ miny maxy)))
-            (s (-scale-by max-side (- maxx minx) (- maxy miny))))
+    (multiple-value-bind (minx maxx miny maxy)
+      (if non-edge (avec:minmax verts num-verts)
+                   (avec::minmax* verts (get-vert-inds wer :g g)))
+      (let* ((mx (* 0.5d0 (+ minx maxx)))
+             (my (* 0.5d0 (+ miny maxy)))
+             (w (- maxx minx))
+             (h (- maxy miny))
+             (s (-scale-by max-side w h)))
         (declare (double-float mx my))
         (itr-verts (wer v) (-center verts v xy mx my :s s))
-        (values (vec:vec mx my) s)))))
+        (values (vec:vec mx my) (vec:vec w h) s)))))
+
+(defun cut-to-area! (wer w h &key g)
+  "
+  removes all edges (in g) outside envelope (0d0 0d0), (w h).
+  all edges intersecting the envelope will be deleted, a new vert will be
+  inserted on the intersection. connected to the inside vert.
+  edges inside the envelope will be left as they are.
+  "
+  (declare (weir wer) (double-float w h))
+  (labels
+    ((inside (pt)
+      (declare (vec:vec pt))
+      (vec:with-xy (pt x y) (and (>= x 0d0) (>= y 0d0) (<= x w) (<= y h))))
+
+     (split-line (line &aux (rev nil))
+       (declare (list line) (boolean rev))
+       (unless (inside (first line)) (setf line (reverse line) rev t))
+       (destructuring-bind (a b) line
+         (declare (vec:vec a b))
+         (return-from split-line
+           (vec:with-xy (a xa ya)
+             (vec:with-xy (b xb yb)
+               (list rev (vec:lon-line
+                           (cond ((> xb w) (/ (- w xa) (- xb xa)))
+                                 ((> yb h) (/ (- h ya) (- yb ya)))
+                                 ((< xb 0d0) (/ (- xa) (- xb xa)))
+                                 ((< yb 0d0) (/ (- ya) (- yb ya))))
+                           line)))))))
+
+     (cutfx (line)
+       (declare (list line))
+       (let ((c (length (remove-if-not (lambda (v) (inside v)) line))))
+         (declare (fixnum c))
+         (cond ((= c 0) (values :none nil nil))
+               ((= c 1) (destructuring-bind (rev pt) (split-line line)
+                          (values :split rev pt)))
+               (t (values :keep nil nil))))))
+
+    (with (wer %)
+      (itr-edges (wer e :g g)
+        (multiple-value-bind (state rev pt) (cutfx (get-verts wer e))
+          (declare (symbol state) (boolean rev) (vec:vec rev))
+          (cond ((equal state :keep) t)
+                ((equal state :none) (% (ldel-edge? e :g g)))
+                ((equal state :split)
+                   (% (ldel-edge? e :g g))
+                   (% (append-edge?
+                        (if rev (second e) (first e)) pt :rel nil :g g)))))))))
 
 
 (defun build-zonemap (wer rad)

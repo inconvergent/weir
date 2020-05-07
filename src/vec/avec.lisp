@@ -72,8 +72,7 @@
 (declaim (inline 3getv))
 (defun 3getv (a i &aux (ii (* 3 i)))
   "get value of a[i] as v"
-  (declare #.*opt-settings*
-           (pos-int i ii) (type (simple-array double-float) a))
+  (declare #.*opt-settings* (pos-int i ii) (type (simple-array double-float) a))
   (vec:3vec (aref a ii) (aref a (1+ ii)) (aref a (+ 2 ii))))
 
 (declaim (inline 3setv))
@@ -87,10 +86,36 @@
   v)
 
 
+; TODO: generalize these functions
+(declaim (inline minmax*))
+(defun minmax* (a inds)
+  (declare #.*opt-settings* (list inds) (type (simple-array double-float) a))
+  (loop with i of-type pos-int = 0
+        for i* of-type pos-int in inds
+        do (setf i (* i* 2))
+        minimizing (aref a i) into minx of-type double-float
+        maximizing (aref a i) into maxx of-type double-float
+        minimizing (aref a (1+ i)) into miny of-type double-float
+        maximizing (aref a (1+ i)) into maxy of-type double-float
+        finally (return (values minx maxx miny maxy))))
+
+(declaim (inline 3minmax*))
+(defun 3minmax* (a inds)
+  (declare #.*opt-settings* (list inds) (type (simple-array double-float) a))
+  (loop with i of-type pos-int = 0
+        for i* of-type pos-int in inds
+        do (setf i (* i* 3))
+        minimizing (aref a i) into minx of-type double-float
+        maximizing (aref a i) into maxx of-type double-float
+        minimizing (aref a (1+ i)) into miny of-type double-float
+        maximizing (aref a (1+ i)) into maxy of-type double-float
+        minimizing (aref a (+ i 2)) into minz of-type double-float
+        maximizing (aref a (+ i 2)) into maxz of-type double-float
+        finally (return (values minx maxx miny maxy minz maxz))))
+
 (declaim (inline minmax))
 (defun minmax (a num)
-  (declare #.*opt-settings*
-           (pos-int num) (type (simple-array double-float) a))
+  (declare #.*opt-settings* (pos-int num) (type (simple-array double-float) a))
   (loop for i of-type pos-int from 0 below (* 2 num) by 2
         minimizing (aref a i) into minx of-type double-float
         maximizing (aref a i) into maxx of-type double-float
@@ -100,8 +125,7 @@
 
 (declaim (inline 3minmax))
 (defun 3minmax (a num)
-  (declare #.*opt-settings*
-           (pos-int num) (type (simple-array double-float) a))
+  (declare #.*opt-settings* (pos-int num) (type (simple-array double-float) a))
   (loop for i of-type pos-int from 0 below (* 3 num) by 3
         minimizing (aref a i) into minx of-type double-float
         maximizing (aref a i) into maxx of-type double-float

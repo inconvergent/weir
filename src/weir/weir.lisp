@@ -331,6 +331,10 @@
                                  :props props)))
   name*)
 
+(defun del-grp! (wer &key g)
+  (declare (symbol g))
+  (remhash g (weir-grps wer)))
+
 
 (defmacro -valid-vert ((num v &key (err t)) &body body)
   (alexandria:with-gensyms (v* num*)

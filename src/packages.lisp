@@ -910,8 +910,10 @@
     #:append-edge?
     #:build-zonemap
     #:center!
+    #:cut-to-area!
     #:del-edge!
     #:del-edge?
+    #:del-grp!
     #:edge-exists
     #:edge-length
     #:export-verts-grp
