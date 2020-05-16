@@ -281,7 +281,7 @@
     (with (wer %)
       (itr-edges (wer e :g g)
         (multiple-value-bind (state rev pt) (cutfx (get-verts wer e))
-          (declare (symbol state) (boolean rev) (vec:vec rev))
+          (declare (symbol state) (boolean rev) (vec:vec pt))
           (cond ((equal state :keep) t)
                 ((equal state :none) (% (ldel-edge? e :g g)))
                 ((equal state :split)
