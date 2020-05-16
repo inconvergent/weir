@@ -23,10 +23,12 @@
 ; CYCLE BASIS
 
 (defun get-cycle-basis (wer &key g)
-  (with-grp (wer grp g)
-    (graph:get-cycle-basis (grp-grph grp)
-      :weightfx (lambda (a b) (weir:edge-length wer a b)))))
-
+  (let ((weightfx (if (= (weir-dim wer) 2)
+                      (lambda (a b) (weir:edge-length wer a b))
+                      (lambda (a b) (weir:3edge-length wer a b)))))
+    (declare (function weightfx))
+    (with-grp (wer grp g)
+      (graph:get-cycle-basis (grp-grph grp) :weightfx weightfx))))
 
 ; CONTINOUS PATHS
 
