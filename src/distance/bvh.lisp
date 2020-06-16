@@ -1,9 +1,8 @@
 
 (in-package :bvh)
 
-(declaim (double-float *eps* *inveps*))
+(declaim (double-float *eps*))
 (defparameter *eps* 1d-14)
-(defparameter *inveps* (/ *eps*))
 
 
 (deftype pos-int (&optional (bits 31))
@@ -52,9 +51,13 @@
           (dy (- (vec:3vec-y ma) (vec:3vec-y mi)))
           (dz (- (vec:3vec-z ma) (vec:3vec-z mi))))
       (declare (double-float dx dy dz))
-      (cond ((and (>= dx dy) (>= dx dz)) #'vec:3vec-x)
-            ((and (>= dy dx) (>= dy dz)) #'vec:3vec-y)
-            (t #'vec:3vec-z)))))
+      ;(cond ((and (> dx dy) (> dx dz)) #'vec:3vec-x)
+      ;      ((and (> dy dx) (> dy dz)) #'vec:3vec-y)
+      ;      (t #'vec:3vec-z))
+      (second (first (sort `((,dx ,#'vec:3vec-x)
+                             (,dy ,#'vec:3vec-y)
+                             (,dz ,#'vec:3vec-z))
+                           #'> :key #'first))))))
 
 
 (declaim (inline -axissort))
@@ -63,8 +66,13 @@
   (let ((axisfx (-longaxis objs)))
     (declare (function axisfx))
     ; sort by bbox min: (second o)
-    (sort objs #'< :key (lambda (o) (declare #.*opt-settings* (list o))
-                          (the double-float (funcall axisfx (second o)))))))
+    ;(sort objs #'< :key (lambda (o) (declare #.*opt-settings* (list o))
+    ;                      (the double-float (funcall axisfx (second o)))))
+    (sort objs (lambda (a b) (declare (list a b))
+                 (and (< (the double-float (funcall axisfx (second a)))
+                         (the double-float (funcall axisfx (second b))))
+                      (< (the double-float (funcall axisfx (third a)))
+                         (the double-float (funcall axisfx (third b)))))))))
 
 
 (defun make (all-objs leaffx &key bt (num 5))
@@ -98,18 +106,20 @@
       (build root all-objs)
       res)))
 
-(declaim (inline -select-bound))
-(defun -select-bound (org invl mi ma sig axis)
-  (declare #.*opt-settings* (vec:3vec org invl mi ma) (boolean sig)
-                            (function axis))
-  (let ((invl (funcall axis invl))
-        (org (funcall axis org)))
-    (declare (double-float invl org))
-    (if sig
-        (values (* invl (the double-float (- (the double-float (funcall axis ma)) org)))
-                (* invl (the double-float (- (the double-float (funcall axis mi)) org))))
-        (values (* invl (the double-float (- (the double-float (funcall axis mi)) org)))
-                (* invl (the double-float (- (the double-float (funcall axis ma)) org)))))))
+
+(defmacro -select-bound ((org invl mi ma sig tmin tmax afx) &body body)
+  (alexandria:with-gensyms (ai ao)
+    `(let ((,ai (,afx ,invl))
+           (,ao (,afx ,org)))
+      (declare (double-float ,ai ,ao))
+      (if ,sig (let ((,tmin (* ,ai (- (,afx ,mi) ,ao)))
+                     (,tmax (* ,ai (- (,afx ,ma) ,ao))))
+                 (declare (double-float ,tmin ,tmax))
+                 (progn ,@body))
+               (let ((,tmin (* ,ai (- (,afx ,ma) ,ao)))
+                     (,tmax (* ,ai (- (,afx ,mi) ,ao))))
+                 (declare (double-float ,tmin ,tmax))
+                 (progn ,@body))))))
 
 ;Brian Smits. Efficient bounding box intersection. Ray tracing news, 15(1), 2002.
 ;http://people.csail.mit.edu/amy/papers/box-jgt.pdf
@@ -117,26 +127,13 @@
 (defun -bbox-test (org invl sigx sigy sigz mi ma)
   (declare #.*opt-settings* (vec:3vec org invl mi ma)
                             (boolean sigx sigy sigz))
-
-  (multiple-value-bind (tmin tmax)
-    (-select-bound org invl mi ma sigx #'vec:3vec-x)
-    (declare (double-float tmin tmax))
-
-    (multiple-value-bind (tymin tymax)
-      (-select-bound org invl mi ma sigy #'vec:3vec-y)
-      (declare (double-float tymin tymax))
-
-      (when (or (> tmin tymax) (> tymin tymax))
-            (return-from -bbox-test nil))
+  (-select-bound (org invl mi ma sigx tmin tmax vec:3vec-x)
+    (-select-bound (org invl mi ma sigy tymin tymax vec:3vec-y)
+      (when (or (> tmin tymax) (> tymin tmax)) (return-from -bbox-test nil))
       (when (> tymin tmin) (setf tmin tymin))
       (when (< tymax tmax) (setf tmax tymax))
-
-      (multiple-value-bind (tzmin tzmax)
-        (-select-bound org invl mi ma sigz #'vec:3vec-z)
-        (declare (double-float tzmin tzmax))
-
-        (when (or (> tmin tzmax) (> tzmin tmax))
-              (return-from -bbox-test nil))
+      (-select-bound (org invl mi ma sigz tzmin tzmax vec:3vec-z)
+        (when (or (> tmin tzmax) (> tzmin tmax)) (return-from -bbox-test nil))
         (when (> tzmin tmin) (setf tmin tzmin))
         (when (< tzmax tmax) (setf tmax tzmax))
         (and (< tmin 1d0) (> tmax 0d0))))))
@@ -145,9 +142,7 @@
 (declaim (inline -eps-div))
 (defun -eps-div (x)
   (declare #.*opt-settings* (double-float x))
-  (if (or (> x *eps*) (< x (- *eps*)))
-      (/ 1d0 x)
-      (/ 1d0 *inveps*)))
+  (if (or (> x *eps*) (< x (- *eps*))) (/ x) *eps*))
 
 (declaim (inline -eps-inv))
 (defun -eps-inv (l)
@@ -159,9 +154,9 @@
 (defun make-line-bbox-test (org l)
   (declare #.*opt-settings* (vec:3vec org l))
   (let* ((invl (-eps-inv l))
-         (sigx (< (vec:3vec-x invl) 0d0))
-         (sigy (< (vec:3vec-y invl) 0d0))
-         (sigz (< (vec:3vec-z invl) 0d0)))
+         (sigx (<= 0d0 (vec:3vec-x invl)))
+         (sigy (<= 0d0 (vec:3vec-y invl)))
+         (sigz (<= 0d0 (vec:3vec-z invl))))
     (declare (boolean sigx sigy sigz) (vec:3vec invl))
     (lambda (mi ma) (declare #.*opt-settings* (vec:3vec mi ma))
       (-bbox-test org invl sigx sigy sigz mi ma))))

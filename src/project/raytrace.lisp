@@ -68,3 +68,28 @@
           (lparallel:pmap nil #'-do-row :parts parts
             (to-vector (math:range 0 size))))))))
 
+
+(defun -pixel-render (proj size renderfx)
+  (declare #.*opt-settings* (ortho proj) (pos-int size)
+                            (function renderfx))
+  "
+  execute (renderfx i j xy) for every pixel (i j) with world coordinate xy
+  "
+  (with-struct (ortho- u v s xy cam) proj
+    (declare (vec:3vec u v cam) (double-float s) (vec:vec xy))
+    (let ((invs (/ s)))
+      (declare (double-float invs))
+      (vec:with-xy ((vec:smult xy (- invs)) px py)
+        (labels
+          ((-pt (uv u px i)
+             (declare #.*opt-settings* (double-float px i) (vec:3vec u uv))
+             (vec:3add! (vec:3smult u (+ px (* i invs))) uv))
+           (-do-row (j)
+             (declare #.*opt-settings* (fixnum j))
+             (loop with j* of-type double-float = (coerce j 'double-float)
+                   with uv of-type vec:3vec = (-pt cam v py j*)
+                   for i of-type fixnum from 0 below size
+                   do (funcall renderfx i j
+                               (-pt uv u px (coerce i 'double-float))))))
+          (map nil #'-do-row (to-vector (math:range 0 size))))))))
+

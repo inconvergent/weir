@@ -1,11 +1,9 @@
 (in-package :vec)
 
-(declaim (vec:3vec *3one* *3zero**)
-         (double-float *eps* *inveps* PII))
+(declaim (3vec *3one* *3zero*) (double-float *eps* PII))
 (defparameter *3one* (3rep 1d0 1d0 1d0))
 (defparameter *3zero* (3rep 0d0 0d0 0d0))
 (defparameter *eps* 1d-14)
-(defparameter *inveps* #.(/ 1d-14))
 
 
 (declaim (inline 3from-vec))
@@ -308,7 +306,8 @@
            (ldotn (3dot ln n)))
       (declare (3vec ln) (double-float ldotn))
       ; avoid div0.
-      (when (= ldotn 0d0) (return-from 3planex (values nil 0d0 0d0)))
+      (when (< (abs ldotn) 1d-14)
+            (return-from 3planex (values nil 0d0 (3zero))))
       ; else
       (let ((d (-plane-test p l0 n ldotn)))
         (declare (double-float d))
@@ -318,47 +317,48 @@
 (declaim (inline -3polyx))
 (defun -3polyx (v0 e1 e2 org l)
   (declare #.*opt-settings* (3vec org l v0 e1 e2))
-  (let* ((h (vec:3cross l e2))
-         (a (vec:3dot e1 h)))
+  (let* ((h (3cross l e2))
+         (a (3dot e1 h)))
     (declare (3vec h) (double-float a))
 
   ; parallel
-  (when (and (> a (- *eps*)) (< a *eps*))
+  (when (< (abs a) *eps*)
         (return-from -3polyx (values nil 0d0 *3zero*)))
 
-  (let* ((s (3sub org v0))
-         (f (/ 1d0 a))
-         (u (* f (vec:3dot s h))))
-    (declare (3vec org s) (double-float f u))
+  (let* ((f (/ a))
+         (s (3sub org v0))
+         (u (* f (3dot s h))))
+    (declare (3vec s) (double-float f u))
 
     (when (or (< u 0d0) (> u 1d0))
           (return-from -3polyx  (values nil 0d0 *3zero*)))
 
-    (let* ((q (vec:3cross! s e1))
+    (let* ((q (3cross! s e1))
            (v (* f (3dot l q))))
       (declare (3vec q) (double-float v))
       (when (or (< v 0d0) (> (+ u v) 1d0))
             (return-from -3polyx  (values nil 0d0 *3zero*)))
 
-      (let ((tt (* f (vec:3dot e2 q))))
+      (let ((tt (* f (3dot e2 q))))
         (declare (double-float tt))
-        (when (and (> tt *eps*) (< tt *inveps*))
-              (return-from -3polyx  (values t tt (3from org l tt)))))
-      ; intersection (but not on line)
-      (values nil 0d0 *3zero*)))))
+        (if (and (> tt *eps*) (< tt 1d0))
+            ; intersection on line
+            (values t tt (3from org l tt))
+            ; intersection (not on line)
+            (values nil tt (3from org l tt))))))))
 
 (defun 3polyx (verts line )
   (declare #.*opt-settings* (list verts line))
   (destructuring-bind (v0 v1 v2) verts
     (declare (3vec v0 v1 v2))
-    (-3polyx v0 (vec:3sub v1 v0) (vec:3sub v2 v0)
+    (-3polyx v0 (3sub v1 v0) (3sub v2 v0)
              (first line) (apply #'3isub line))))
 
 
 (defun 3make-polyx (v0 v1 v2)
   (declare #.*opt-settings* (3vec v0 v1 v2))
-  (let ((e1 (vec:3sub v1 v0))
-        (e2 (vec:3sub v2 v0)))
+  (let ((e1 (3sub v1 v0))
+        (e2 (3sub v2 v0)))
     (declare (3vec e1 e2))
     (lambda (org l) (declare (3vec org l)) (-3polyx v0 e1 e2 org l))))
 
@@ -367,15 +367,14 @@
 (declaim (inline -3spherex))
 (defun -3spherex (r oc l llen)
   (declare #.*opt-settings* (3vec oc l) (double-float r llen))
-  (let* ((ldotoc (vec:3dot l oc))
-         (s (- (expt ldotoc 2d0) (- (vec:3len2 oc) (* r r)))))
+  (let* ((ldotoc (3dot l oc))
+         (s (- (expt ldotoc 2d0) (- (3len2 oc) (* r r)))))
       (declare (double-float ldotoc s))
 
       (when (< s 0d0) (return-from -3spherex (values nil nil)))
-      (when (> s 0d0)
-            (return-from -3spherex
-              (values t (list (/ (- s ldotoc) llen)
-                              (/ (- (- ldotoc) s) llen)))))
+      (when (> s 0d0) (return-from -3spherex
+                        (values t (list (/ (- s ldotoc) llen)
+                                        (/ (- (- ldotoc) s) llen)))))
       (values t (list (/ (- ldotoc) llen)))))
 
 (declaim (inline 3spherex))
@@ -383,9 +382,9 @@
   (declare #.*opt-settings* (3vec c) (double-float r) (list line))
   "intersection of sphere (c, r) and line (o e)"
   (destructuring-bind (o e) line
-    (declare (vec:3vec o e))
-    (let* ((ll (vec:3sub e o))
-           (llen (vec:3len ll)))
-      (declare (vec:3vec ll) (double-float llen))
-      (-3spherex r (vec:3sub o c) (vec:3sdiv ll llen) llen))))
+    (declare (3vec o e))
+    (let* ((ll (3sub e o))
+           (llen (3len ll)))
+      (declare (3vec ll) (double-float llen))
+      (-3spherex r (3sub o c) (3sdiv ll llen) llen))))
 

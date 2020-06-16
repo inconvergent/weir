@@ -46,6 +46,34 @@
                            (6 4 5) (6 7 5) (0 6 7) (0 1 7)))))))
 
 
+
+(defun add-cyllinder! (msh n rad h &key (xy vec:*3zero*) (rot 0d0))
+  (declare (mesh msh) (fixnum n) (vec:3vec xy) (double-float rad h))
+  (labels
+    ((-cyl-verts (z)
+       (weir-utils:to-vector
+         (add-verts! msh
+           (vec:3lfrom-vec (vec:polygon n rad :xy (vec:3to-vec xy) :rot rot)
+                           :z z)))))
+
+    (let* ((z (vec:3vec-z xy))
+           (top (-cyl-verts (+ z h)))
+           (bot (-cyl-verts z))
+           (res (list)))
+
+      (loop for i from 0 below (1- n)
+            do (push (add-polygon! msh
+                       (list (aref bot i) (aref top i) (aref bot (1+ i)))) res)
+               (push (add-polygon! msh
+                      (list (aref top i) (aref top (1+ i)) (aref bot (1+ i)))) res))
+
+      (push (add-polygon! msh
+              (list (aref bot (1- n)) (aref top (1- n)) (aref bot 0))) res)
+      (push (add-polygon! msh
+              (list (aref top (1- n)) (aref top 0) (aref bot 0))) res)
+      res)))
+
+
 (defun add-polyhedra! (msh verts)
   (declare (mesh msh) (list verts))
   (let ((inds (add-verts! msh verts)))

@@ -488,10 +488,13 @@
     #:non-a-add!
     #:non-a-clamp
     #:non-a-clamp!
+    #:non-a-combine
+    #:non-a-combine!
     #:non-a-mult
     #:non-a-mult!
     #:non-a-scale
     #:non-a-scale!
+    #:non-a-scale-add
     #:non-a-scale-add!
     #:orange
     #:red

@@ -1,7 +1,6 @@
 
 (in-package :mesh)
 
-(declaim (double-float *eps*))
 (defparameter *eps* 1d-14)
 
 
@@ -15,7 +14,6 @@
              (push (nconc (list poly) (bvh::-bbox vv)) objs)
              (setf (gethash poly normals) (apply #'-poly-normal vv)))
         finally (return (values objs normals))))
-
 
 
 (defun make-bvh (msh &key vertfx (num 5))
@@ -44,9 +42,10 @@
 (declaim (inline -update-result))
 (defun -update-result (res s i pt)
   (declare #.*opt-settings* (bvhres res) (list i) (double-float s) (vec:3vec))
-  (when (< s (bvhres-s res))
-        (setf (bvhres-s res) s (bvhres-i res) i (bvhres-pt res) pt)
-        nil))
+  (when (< s (bvhres-s res)) (setf (bvhres-s res) s
+                                   (bvhres-i res) i
+                                   (bvhres-pt res) pt))
+  nil)
 
 (defun make-raycaster (bvh &key)
   (declare #.*opt-settings* (bvh:bvh bvh))
@@ -55,9 +54,8 @@
   "
   (labels
     ((recursive-raycast (root org ll &key (skip *nilpoly*) bfx res)
-      (declare #.*opt-settings* (inline) (bvh:node root)
+      (declare #.*opt-settings* (bvh:node root)
                (vec:3vec org ll) (function bfx) (bvhres res))
-
       (unless (funcall bfx (bvh:node-mi root) (bvh:node-ma root))
               (return-from recursive-raycast))
 
@@ -68,7 +66,7 @@
                     if (not (equal i skip))
                     do (multiple-value-bind (isect s pt)
                          (funcall (the function leaffx) org ll)
-                         (when (and isect (> s *eps*) )
+                         (when (and isect (> s *eps*))
                                (-update-result res s i pt))))
               (return-from recursive-raycast)))
 

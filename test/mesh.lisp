@@ -26,6 +26,22 @@
     (mesh:add-polygon! msh (list d b c)))
   msh)
 
+(defun make-cyl-box (msh)
+  (loop with objs = (list)
+        with n = 2
+        with ss = 120d0
+        with ls = (math:linspace n -200d0 200d0)
+        initially
+        (setf objs (cons (list :white (mesh:add-rect! msh :sx 500d0 :sy 500d0))
+                          objs))
+        for x in ls
+        do (loop for y in ls
+                 do (loop for z in (list 0d0)
+                          do (rnd:either
+                               (mesh:add-open-box! msh ss ss :xy (vec:3vec x y ss))
+                               (mesh::add-cyllinder! msh 20 80d0 350d0 :xy (vec:3vec x y z))))))
+  msh)
+
 
 (defun %test-mesh ()
 
@@ -108,7 +124,7 @@
 
     (do-test
       (loop with vertfx = (mesh:make-vert-getter msh)
-            with bvh = (mesh:make-bvh msh :vertfx vertfx)
+            with bvh = (mesh:make-bvh msh :vertfx vertfx :num 3)
             with raycastfx = (mesh:make-raycaster bvh)
             for line in lines
             collect (funcall raycastfx line))
@@ -136,7 +152,127 @@
          :i (0 2 3)
          :s 0.47020698603563754d0
          :pt #s(vec:3vec :x 131.25511031357405d0 :y -100.54199887894856d0 :z 27.408671919132985d0)
-         :n #s(vec:3vec :x -0.36640614639471814d0 :y 0.40958501157582455d0 :z -0.8354559558568028d0))))))
+         :n #s(vec:3vec :x -0.36640614639471814d0 :y 0.40958501157582455d0 :z -0.8354559558568028d0)))))
+
+  (let ((msh (make-cyl-box (mesh:make)))
+        (data '(#s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (88 90 89)
+         :s 0.23035274846722406d0
+         :pt #s(vec:3vec :x 111.55679826224109d0 :y -80.0d0 :z 83.85546489899144d0)
+         :n #s(vec:3vec :x -0.0d0 :y 1.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (88 90 89)
+         :s 0.12035016278085758d0
+         :pt #s(vec:3vec :x 85.69108773090146d0 :y -79.99999999999999d0 :z 137.10768145773488d0)
+         :n #s(vec:3vec :x -0.0d0 :y 1.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (60 61 81)
+         :s 0.20810573334517637d0
+         :pt #s(vec:3vec :x -161.87567107221008d0 :y 130.7446326931683d0 :z 250.87918667731833d0)
+         :n #s(vec:3vec :x -0.45399049973954647d0 :y 0.8910065241883681d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (60 61 81)
+         :s 0.4792348505570121d0
+         :pt #s(vec:3vec :x -156.46447418542218d0 :y 133.5017752192118d0 :z 72.41956891968383d0)
+         :n #s(vec:3vec :x -0.45399049973954647d0 :y 0.8910065241883681d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (-1 -1 -1)
+         :s 900000.0d0
+         :pt #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0)
+         :n #s(vec:3vec :x 0.0d0 :y 0.0d0 :z 0.0d0))
+      #s(mesh:bvhres
+         :i (88 90 89)
+         :s 0.16988050960449216d0
+         :pt #s(vec:3vec :x 141.2003369923994d0 :y -80.0d0 :z 161.16843580780267d0)
+         :n #s(vec:3vec :x -0.0d0 :y 1.0d0 :z 0.0d0))))
+        (lines (loop repeat 20
+                     collect (list (vec:3vec 0d0 0d0 50d0)
+                                   (rnd:3on-sphere :rad 1000d0 :xy (vec:3vec 0d0 0d0 1000d0))))))
+
+    (do-test
+      (loop with vertfx = (mesh:make-vert-getter msh)
+            with bvh = (mesh:make-bvh msh :vertfx vertfx :num 3)
+            with raycastfx = (mesh:make-raycaster bvh)
+            for line in lines
+            collect (funcall raycastfx line))
+      data)
+    (do-test
+      (loop with vertfx = (mesh:make-vert-getter msh)
+            with bvh = (mesh:make-bvh msh :vertfx vertfx :num 14)
+            with raycastfx = (mesh:make-raycaster bvh)
+            for line in lines
+            collect (funcall raycastfx line))
+      data)))
 
 
 (define-file-tests test-mesh ()
