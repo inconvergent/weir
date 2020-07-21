@@ -26,9 +26,9 @@
             (rnd:3on-sphere :rad rad)))))
 
 ; naive (and slow) recursive raytracer with reflections
-(defun make-renderer (raycast lights &key (depth 10) (rk 0.4d0)
-                                     &aux (invrk (- 1d0 rk))
-                                          (white (pigment:white)))
+(defun make-renderer (bvh lights &key (depth 10) (rk 0.4d0)
+                                 &aux (invrk (- 1d0 rk))
+                                      (white (pigment:white)))
   (labels
     ((do-diffuse (poly n p)
       (declare (list poly) (vec:3vec n p))
@@ -38,7 +38,7 @@
                       (dot (vec:3dot n dir)))
                  (when (and (< 0d0 dot)
                             (equal (mesh:bvhres-i
-                                     (funcall raycast
+                                     (mesh:raycast bvh
                                        (list (vec:3from p dir 0.0001d0) pos)))
                                    '(-1 -1 -1)))
                        (pigment:safe-clamp!
@@ -69,7 +69,7 @@
          c))
 
      (raytrace (ray &key (d depth))
-       (let ((h (funcall raycast ray)))
+       (let ((h (mesh:raycast bvh ray)))
          (if (not (equal (mesh:bvhres-i h) '(-1 -1 -1)))
              (shade (mesh:bvhres-i h) (mesh:bvhres-n h)
                     (mesh:bvhres-pt h) ray :d d)
@@ -94,9 +94,8 @@
 
     (let* ((vertfx (mesh:make-vert-getter msh)) ; vertex accessor
            (bvh (mesh:make-bvh msh :vertfx vertfx :num 3)) ; bvh structure
-           (raycast (mesh:make-raycaster bvh))
-           (render (make-renderer raycast lights))
-           (aa 10) ; samples per pixel. higher is slower
+           (render (make-renderer bvh lights))
+           (aa 5) ; samples per pixel. higher is slower
            (raa (/ 1d0 (coerce aa 'double-float)))
            (disc-ray (ortho::make-sample-disc-ray proj ; depth of field offset
                        :rad 0.3d0 :d (* 0.9d0 (vec:3len cam)))))

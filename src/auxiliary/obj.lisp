@@ -1,19 +1,4 @@
 
-(defpackage :obj
-  (:use :common-lisp)
-  (:export
-    :add-face
-    :add-verts
-    :add-line
-    :make
-    :save)
-  (:import-from :common-lisp-user
-    :vextend
-    :ensure-filename
-    :make-adjustable-vector
-    :with-struct))
-
-
 (in-package :obj)
 
 

@@ -8,7 +8,7 @@
             (declare (list poly))
             (let ((vv (funcall vertfx poly)))
               (declare (list vv))
-              (list poly (apply #'vec::3make-polyx vv)
+              (list poly (apply #'make-polyx vv)
                          (apply #'-poly-normal vv))))
           (get-all-polygons msh)))
 

@@ -219,6 +219,18 @@ START, END:     bounding index designators of SEQUENCE.
             while val do (when newl
                            (funcall fx (floats-string-to-list val pos)))))))
 
+
+(defun do-lines (fn fx &key (buffer-width 80))
+  (declare #.*opt-settings* (function fx) (fixnum buffer-width))
+  (let ((buffer (make-array buffer-width :element-type 'character
+                                         :initial-element #\space)))
+    (with-open-file (is fn :direction :input)
+      (loop for (val pos newl) =
+                  (multiple-value-list (read-line-into-sequence buffer is
+                                         :eof-error-p nil))
+            while val do (when newl
+                           (funcall fx (subseq val 0 pos)))))))
+
 ;; ----------------------------------------------------------------------
 
 

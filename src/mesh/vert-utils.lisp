@@ -33,7 +33,7 @@
   returns the ids of the new vertices
   "
   (declare #.*opt-settings* (mesh msh) (list vv))
-  (loop for xy of-type vec:3vec in vv collect (add-vert! msh xy)))
+  (loop for xy of-type vec:3vec in vv collect (add-vert! msh xy) of-type pos-int))
 
 
 (defun get-vert (msh v)
@@ -83,6 +83,11 @@
     (loop for i of-type pos-int in inds
           and p of-type vec:3vec in (funcall fx verts)
           do (move-vert! msh i p :rel nil))))
+
+(defun transform*! (msh inds fx)
+  (declare (mesh msh) (list inds) (function fx))
+  (transform! msh (remove-duplicates (alexandria:flatten inds)) fx))
+
 
 (defun make-vert-getter (msh)
   (declare (mesh msh))

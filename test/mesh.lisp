@@ -125,9 +125,8 @@
     (do-test
       (loop with vertfx = (mesh:make-vert-getter msh)
             with bvh = (mesh:make-bvh msh :vertfx vertfx :num 3)
-            with raycastfx = (mesh:make-raycaster bvh)
             for line in lines
-            collect (funcall raycastfx line))
+            collect (mesh:raycast bvh line))
       '(#s(mesh:bvhres
         :i (0 1 3)
         :s 0.45577317191322947d0
@@ -262,16 +261,14 @@
     (do-test
       (loop with vertfx = (mesh:make-vert-getter msh)
             with bvh = (mesh:make-bvh msh :vertfx vertfx :num 3)
-            with raycastfx = (mesh:make-raycaster bvh)
             for line in lines
-            collect (funcall raycastfx line))
+            collect (mesh:raycast bvh line))
       data)
     (do-test
       (loop with vertfx = (mesh:make-vert-getter msh)
             with bvh = (mesh:make-bvh msh :vertfx vertfx :num 14)
-            with raycastfx = (mesh:make-raycaster bvh)
             for line in lines
-            collect (funcall raycastfx line))
+            collect (mesh:raycast bvh line))
       data)))
 
 

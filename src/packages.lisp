@@ -679,6 +679,20 @@
     #:*opt-settings*
     #:ensure-filename))
 
+(defpackage :obj
+  (:use :common-lisp)
+  (:export
+    #:add-face
+    #:add-verts
+    #:add-line
+    #:make
+    #:save)
+  (:import-from :weir-utils
+    #:vextend
+    #:ensure-filename
+    #:make-adjustable-vector
+    #:with-struct))
+
 (defpackage #:gridfont
   (:use #:common-lisp)
   (:export
@@ -827,17 +841,35 @@
     #:make-bvh
     #:make-cone-light
     #:make-hidden-fx
-    #:make-raycaster
     #:make-raytracer
     #:make-refraction-raytracer
     #:make-unhidden-line-fx
     #:make-vert-getter
     #:move-vert!
     #:normal
+    #:obj-export
     #:obj-load
     #:polyx
+    #:raycast
     #:refract-or-reflect
-    #:transform!)
+    #:transform!
+    #:transform*!)
+  (:import-from #:weir-utils
+    #:*opt-settings*
+    #:ensure-filename
+    #:make-adjustable-vector
+    #:to-list
+    #:to-vector
+    #:vextend
+    #:with-struct))
+
+(defpackage #:voxels
+  (:use #:common-lisp)
+  (:export
+    #:get-mesh
+    #:getvoxel
+    #:make
+    #:setvoxel)
   (:import-from #:weir-utils
     #:*opt-settings*
     #:make-adjustable-vector
@@ -857,7 +889,7 @@
     #:make
     #:make-bvh
     #:make-point-getter
-    #:make-raycaster
+    #:raycast
     #:update-result)
   (:import-from #:weir-utils
     #:*opt-settings*

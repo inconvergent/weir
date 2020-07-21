@@ -1,7 +1,7 @@
 
 (in-package #:weir-utils)
 
-(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 3)))
+(defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 2) (space 2)))
 
 
 (declaim (type double-float PII PI5))

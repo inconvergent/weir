@@ -72,47 +72,34 @@
 (declaim (inline -update-result))
 (defun -update-result (res s i)
   (declare #.*opt-settings* (bvhres res) (fixnum i) (double-float s))
-  (when (< s (bvhres-s res))
-        (setf (bvhres-s res) s (bvhres-i res) i)
-        nil))
+  (when (< s (bvhres-s res)) (setf (bvhres-s res) s (bvhres-i res) i))
+  nil)
 
-(defun make-raycaster (bvh)
-  (declare #.*opt-settings* (bvh:bvh bvh))
-  "
-  make raycaster based on the bvh structure.
-  returns closest hit.
-  "
-  (labels
-    ((recursive-raycast (root org l &key bfx res)
-      (declare #.*opt-settings* (inline) (bvh:node root)
-               (vec:3vec org l) (function bfx) (bvhres res))
+;(declaim (inline -do-raycast))
+(defun -do-raycast (root org l bfx res)
+  (declare #.*opt-settings* (bvh:node root) (vec:3vec org l)
+                            (function bfx) (bvhres res))
+  (unless (funcall bfx (bvh:node-mi root) (bvh:node-ma root))
+          (return-from -do-raycast))
+  (let ((leaves (bvh:node-leaves root)))
+    (declare (list leaves))
+    (when leaves
+          (loop for (i leaffx) of-type (fixnum function) in leaves
+                do (let ((s (funcall (the function leaffx) org l)))
+                     (declare (double-float s))
+                     (when (> s *eps*) (-update-result res s i))))
+          (return-from -do-raycast)))
+  (when (bvh:node-l root) (-do-raycast (bvh:node-l root) org l bfx res))
+  (when (bvh:node-r root) (-do-raycast (bvh:node-r root) org l bfx res)))
 
-      (unless (funcall bfx (bvh:node-mi root) (bvh:node-ma root))
-              (return-from recursive-raycast))
-
-      (let ((leaves (bvh:node-leaves root)))
-        (when leaves
-              (loop for (i leaffx) of-type (fixnum function) in leaves
-                    do (let ((s (funcall (the function leaffx) org l)))
-                         (declare (double-float s))
-                         (when (> s *eps*) (-update-result res s i))))
-              (return-from recursive-raycast)))
-
-      (when (bvh:node-l root)
-            (recursive-raycast (bvh:node-l root) org l :bfx bfx :res res))
-      (when (bvh:node-r root)
-            (recursive-raycast (bvh:node-r root) org l :bfx bfx :res res)))
-
-     (do-raycast (line)
-       (declare #.*opt-settings* (inline) (list line))
-       (let* ((org (first line))
-              (ll (apply #'vec:3isub line))
-              (l (vec:3norm ll))
-              (res (make-bvhres)))
-         (recursive-raycast (bvh:bvh-root bvh) org l
-                            :bfx (bvh:make-line-bbox-test org ll)
-                            :res res)
-         res)))
-
-    #'do-raycast))
+(declaim (inline raycast))
+(defun raycast (bvh line)
+  (declare #.*opt-settings* (bvh:bvh bvh) (list line))
+  (let* ((org (first line))
+         (ll (apply #'vec:3isub line))
+         (l (vec:3norm ll))
+         (res (make-bvhres)))
+    (declare (vec:3vec org l ll) (bvhres res))
+    (-do-raycast (bvh:bvh-root bvh) org l (bvh:make-line-bbox-test org ll) res)
+    res))
 

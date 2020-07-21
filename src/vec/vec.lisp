@@ -1,11 +1,10 @@
 
 (in-package :vec)
 
-(declaim (type double-float PII)
-         (vec:vec *one* *zero*))
+(declaim (type double-float PII) (vec:vec *one* *zero*))
 (defconstant PII  #.(* PI 2d0))
-(defparameter *one* (rep 1d0))
-(defparameter *zero* (rep 0d0))
+(defparameter *one* #.(vec 1d0 1d0))
+(defparameter *zero* #.(vec 0d0 0d0))
 
 
 (declaim (inline to-list))

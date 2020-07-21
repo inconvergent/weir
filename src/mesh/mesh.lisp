@@ -59,11 +59,13 @@
     :edges (make-hash-table :test #'equal)))
 
 
+(declaim (inline -sort-list))
 (defun -sort-list (l)
   (declare #.*opt-settings* (list l))
   (sort (copy-list l) #'<))
 
 
+(declaim (inline -sort-polygon))
 (defun -sort-polygon (poly)
   (declare #.*opt-settings* (list poly))
   "
@@ -77,6 +79,7 @@
           (t (list c a b)))))
 
 
+(declaim (inline -ensure-valid-verts))
 (defun -ensure-valid-verts (vv num-verts)
   (declare #.*opt-settings* (list vv) (pos-int num-verts))
   (loop for v of-type pos-int in vv
@@ -84,6 +87,7 @@
                  (return-from -ensure-valid-verts nil)))
   t)
 
+(declaim (inline -ensure-no-duplicates))
 (defun -ensure-no-duplicates (vv)
   (declare #.*opt-settings* (list vv))
   (destructuring-bind (a b c) (-sort-list vv)
@@ -91,6 +95,7 @@
     (assert (< a b c) (a b c) "duplicate indices in ~a" vv)))
 
 
+(declaim (inline -add-edge))
 (defun -add-edge (edges poly a b)
   (declare #.*opt-settings* (hash-table edges) (list poly) (pos-int a b))
   (let ((e (-sort-list (list a b))))
@@ -99,11 +104,13 @@
                                                    (list poly)))))
     e))
 
+(declaim (inline -duplicate-cands))
 (defun -duplicate-cands (poly)
   (declare #.*opt-settings* (list poly))
   (destructuring-bind (a b c) poly
     (list poly (list a c b))))
 
+(declaim (inline -polygon-exists))
 (defun -polygon-exists (polygons poly)
   (declare #.*opt-settings* (hash-table polygons) (list poly))
   (loop for cand of-type list in (-duplicate-cands poly)
@@ -112,6 +119,7 @@
              (when res (return-from -polygon-exists cand))))
   nil)
 
+(declaim (inline -add-polygon-edges))
 (defun -add-polygon-edges (edges poly)
   (declare #.*opt-settings* (hash-table edges) (list poly))
   (destructuring-bind (a b c) poly
@@ -120,6 +128,7 @@
           (-add-edge edges poly b c)
           (-add-edge edges poly c a))))
 
+(declaim (inline -add-polygon))
 (defun -add-polygon (polygons edges poly)
   (declare #.*opt-settings* (hash-table polygons edges) (list poly))
   ; if polygon exists, return existing polygon

@@ -1,8 +1,8 @@
 (in-package :vec)
 
 (declaim (3vec *3one* *3zero*) (double-float *eps* PII))
-(defparameter *3one* (3rep 1d0 1d0 1d0))
-(defparameter *3zero* (3rep 0d0 0d0 0d0))
+(defparameter *3one* #.(3vec 1d0 1d0 1d0))
+(defparameter *3zero* #.(3vec 0d0 0d0 0d0))
 (defparameter *eps* 1d-14)
 
 
@@ -330,18 +330,18 @@
          (u (* f (3dot s h))))
     (declare (3vec s) (double-float f u))
 
-    (when (or (< u 0d0) (> u 1d0))
-          (return-from -3polyx  (values nil 0d0 *3zero*)))
+    (when (or (> u 1d0) (< u 0d0))
+          (return-from -3polyx (values nil 0d0 *3zero*)))
 
     (let* ((q (3cross! s e1))
            (v (* f (3dot l q))))
       (declare (3vec q) (double-float v))
       (when (or (< v 0d0) (> (+ u v) 1d0))
-            (return-from -3polyx  (values nil 0d0 *3zero*)))
+            (return-from -3polyx (values nil 0d0 *3zero*)))
 
       (let ((tt (* f (3dot e2 q))))
         (declare (double-float tt))
-        (if (and (> tt *eps*) (< tt 1d0))
+        (if (> 1d0 tt *eps*)
             ; intersection on line
             (values t tt (3from org l tt))
             ; intersection (not on line)
@@ -353,14 +353,6 @@
     (declare (3vec v0 v1 v2))
     (-3polyx v0 (3sub v1 v0) (3sub v2 v0)
              (first line) (apply #'3isub line))))
-
-
-(defun 3make-polyx (v0 v1 v2)
-  (declare #.*opt-settings* (3vec v0 v1 v2))
-  (let ((e1 (3sub v1 v0))
-        (e2 (3sub v2 v0)))
-    (declare (3vec e1 e2))
-    (lambda (org l) (declare (3vec org l)) (-3polyx v0 e1 e2 org l))))
 
 
 ; https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection

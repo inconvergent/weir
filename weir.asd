@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "3.84.1"
+  :version "3.87.2"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -47,6 +47,7 @@
                (:file "graph/edge-set")
                (:file "graph/mst-cycle")
                (:file "auxiliary/dat")
+               (:file "auxiliary/obj")
                (:file "gridfont/main")
                (:file "draw/bzspl")
                (:file "draw/lin-path")
@@ -65,6 +66,8 @@
                (:file "mesh/line")
                (:file "mesh/raytracer")
                (:file "mesh/raytracer-refract")
+               (:file "voxel/init")
+               (:file "voxel/voxel")
                (:file "point-cloud/main")
                (:file "point-cloud/bvh")
                (:file "weir/weir")
@@ -91,6 +94,7 @@
                (:file "linear-path")
                (:file "math")
                (:file "mesh")
+               (:file "voxel")
                (:file "ortho")
                (:file "parallel")
                (:file "pigment")
