@@ -1,19 +1,20 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "3.87.2"
+  :version "3.88.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
   :pathname "src/"
   :serial t
-  :depends-on (#:zpng
-               #:cl-svg
-               #:png
-               #:alexandria
+  :depends-on (#:alexandria
                #:cl-json
+               #:cl-svg
+               #:inferior-shell
                #:lparallel
-               #:inferior-shell)
+               #:png
+               #:split-sequence
+               #:zpng)
   :components ((:file "packages")
                (:file "config")
                (:file "various")
@@ -68,6 +69,7 @@
                (:file "mesh/raytracer-refract")
                (:file "voxel/init")
                (:file "voxel/voxel")
+               (:file "voxel/load")
                (:file "point-cloud/main")
                (:file "point-cloud/bvh")
                (:file "weir/weir")

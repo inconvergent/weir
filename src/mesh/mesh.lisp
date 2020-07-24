@@ -55,8 +55,8 @@
     :verts (make-array (* max-verts 3) :initial-element 0d0
                                          :element-type 'double-float)
     :max-verts max-verts
-    :polygons (make-hash-table :test #'equal)
-    :edges (make-hash-table :test #'equal)))
+    :polygons (make-hash-table :test #'equal :size 1024 :rehash-size 2f0)
+    :edges (make-hash-table :test #'equal :size 1024 :rehash-size 2f0)))
 
 
 (declaim (inline -sort-list))

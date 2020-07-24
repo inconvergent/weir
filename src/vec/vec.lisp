@@ -9,31 +9,31 @@
 
 (declaim (inline to-list))
 (defun to-list (v)
-  (declare (vec v))
+  (declare #.*opt-settings* (vec v))
   (list (vec-x v) (vec-y v)))
 
 
 (declaim (inline cross))
 (defun cross (a b)
-  (declare (vec a b))
+  (declare #.*opt-settings* (vec a b))
   (- (* (vec-x a) (vec-y b)) (* (vec-y a) (vec-x b))))
 
 
 (declaim (inline flip))
 (defun flip (v)
-  (declare (vec v))
+  (declare #.*opt-settings* (vec v))
   (vec (vec-y v) (vec-x v)))
 
 
 (declaim (inline perp))
 (defun perp (v)
-  (declare (vec v))
+  (declare #.*opt-settings* (vec v))
   (vec (vec-y v) (- (vec-x v))))
 
 
 (declaim (inline vround))
 (defun vround (v)
-  (declare (vec v))
+  (declare #.*opt-settings* (vec v))
   (list (round (vec-x v)) (round (vec-y v))))
 
 
@@ -45,7 +45,7 @@
 
 
 (defun copy (xy)
-  (declare (vec xy))
+  (declare #.*opt-settings* (vec xy))
   (vec (vec-x xy) (vec-y xy)))
 
 
@@ -237,7 +237,7 @@
 
 (declaim (inline rot))
 (defun rot (v a &key (xy *zero*))
-  (declare (vec v) (double-float a))
+  (declare #.*opt-settings* (vec v) (double-float a))
   (let ((cosa (cos a))
         (sina (sin a)))
     (declare (double-float cosa sina))
@@ -248,7 +248,7 @@
 
 (declaim (inline lrot))
 (defun lrot (pts a &key (xy *zero*))
-  (declare (list pts) (double-float a))
+  (declare #.*opt-settings* (list pts) (double-float a))
   (mapcar (lambda (p) (declare (vec p)) (rot p a :xy xy)) pts))
 
 
@@ -256,7 +256,7 @@
 
 (declaim (inline on-circ))
 (defun on-circ (p rad &key (xy *zero*))
-  (declare (double-float p rad) (vec xy))
+  (declare #.*opt-settings* (double-float p rad) (vec xy))
   (from xy (cos-sin (* p PII)) rad))
 
 
@@ -269,13 +269,13 @@
 
 (declaim (inline lon-line))
 (defun lon-line (p ab)
-  (declare (double-float p) (list ab))
+  (declare #.*opt-settings* (double-float p) (list ab))
   (apply #'on-line p ab))
 
 
 (declaim (inline lon-line*))
 (defun lon-line* (pp ab)
-  (declare (sequence pp) (list ab))
+  (declare #.*opt-settings* (sequence pp) (list ab))
   (if (equal (type-of pp) 'cons)
       (loop for p of-type double-float in pp collect (lon-line p ab))
       (loop for p of-type double-float across pp collect (lon-line p ab))))
@@ -283,20 +283,20 @@
 
 (declaim (inline rect))
 (defun rect (w h &key (xy *zero*))
-  (declare (double-float w h) (vec xy))
+  (declare #.*opt-settings* (double-float w h) (vec xy))
   (list (add xy (vec w (- h))) (add xy (vec w h))
         (add xy (vec (- w) h)) (sub xy (vec w h))))
 
 
 (declaim (inline square))
 (defun square (bs &key (xy *zero*))
-  (declare (double-float bs) (vec xy))
+  (declare #.*opt-settings* (double-float bs) (vec xy))
   (rect bs bs :xy xy))
 
 
 (declaim (inline polygon))
 (defun polygon (n rad &key (xy *zero*) (rot 0d0))
-  (declare (fixnum n) (double-float rad rot) (vec xy))
+  (declare #.*opt-settings* (fixnum n) (double-float rad rot) (vec xy))
   (loop for i of-type fixnum from 0 below n
         collect (from xy (cos-sin
                            (+ rot (* (/ (coerce i 'double-float) n) PII))) rad)))

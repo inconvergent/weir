@@ -9,32 +9,32 @@
 (declaim (inline 3from-vec))
 (defun 3from-vec (v &key (z 0d0))
   "from 2d vec"
-  (declare (vec v) (double-float z))
+  (declare #.*opt-settings* (vec v) (double-float z))
   (3vec (vec-x v) (vec-y v) z))
 
 
 (declaim (inline 3to-vec))
 (defun 3to-vec (v)
   "to 2d vec"
-  (declare (3vec v))
+  (declare #.*opt-settings* (3vec v))
   (vec (3vec-x v) (3vec-y v)))
 
 
 (declaim (inline 3lto-vec))
 (defun 3lto-vec (l)
-  (declare (list l))
+  (declare #.*opt-settings* (list l))
   (loop for v of-type 3vec in l collect (3to-vec v)))
 
 
 (declaim (inline 3lfrom-vec))
 (defun 3lfrom-vec (l &key (z 0d0))
-  (declare (list l))
+  (declare #.*opt-settings* (list l))
   (loop for v of-type vec in l collect (3from-vec v :z z)))
 
 
 (declaim (inline 3to-list))
 (defun 3to-list (v)
-  (declare (3vec v))
+  (declare #.*opt-settings* (3vec v))
   (list (3vec-x v) (3vec-y v) (3vec-z v)))
 
 
@@ -46,7 +46,7 @@
 
 
 (defun 3copy (xy)
-  (declare (3vec xy))
+  (declare #.*opt-settings* (3vec xy))
   (3vec (3vec-x xy) (3vec-y xy) (3vec-z xy)))
 
 
@@ -209,7 +209,7 @@
 
 (declaim (inline 3nsub))
 (defun 3nsub (a b &key (s 1d0) (default *3zero*))
-  (declare (3vec a b))
+  (declare #.*opt-settings* (3vec a b))
   (3norm (3sub a b) :s s :default default))
 
 

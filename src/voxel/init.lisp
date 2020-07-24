@@ -7,6 +7,7 @@
 (deftype pos-double () `(double-float 0d0 *))
 (deftype pos-int (&optional (bits 31)) `(unsigned-byte ,bits))
 (deftype pos-vec () `(simple-array pos-int))
+(deftype pos-arr () `(array pos-int))
 (deftype double-vec () `(simple-array pos-double))
 
 (declaim (type (array pos-int) *triangles*) (vec:3vec *shift*)
@@ -109,11 +110,10 @@
 
 (declaim (inline voxels-a voxels-nx voxels-ny voxels-nz))
 (defstruct (voxels (:constructor -make-voxels))
-  (a nil :type array :read-only t)
+  (a nil :type pos-arr :read-only t)
   (nx 0 :type pos-int :read-only t)
   (ny 0 :type pos-int :read-only t)
-  (nz 0 :type pos-int :read-only t)
-  (max-verts 0 :type pos-int :read-only t))
+  (nz 0 :type pos-int :read-only t))
 
 (defun make (dim)
   (declare #.*opt-settings* (list dim))
@@ -121,19 +121,18 @@
   (destructuring-bind (nx ny nz) dim
     (declare (pos-int nx ny nz))
     (-make-voxels :a (make-array (list (+ nx 2) (+ ny 2) (+ nz 2))
-                       :initial-element nil :element-type 'boolean)
-                  :nx nx :ny ny :nz nz
-                  :max-verts (* (+ nx 2) (+ ny 2) (+ nz 2)))))
+                       :initial-element 0 :element-type 'pos-int)
+                  :nx nx :ny ny :nz nz)))
 
 (declaim (inline getvoxel))
 (defun getvoxel (voxs ix iy iz)
   (declare #.*opt-settings* (voxels voxs) (pos-int ix iy iz))
-  (aref (the (array boolean) (voxels-a voxs)) (1+ ix) (1+ iy) (1+ iz)))
+  (aref (the pos-arr (voxels-a voxs)) (1+ ix) (1+ iy) (1+ iz)))
 
 (declaim (inline setvoxel))
-(defun setvoxel (voxs ix iy iz &optional (v t))
-  (declare #.*opt-settings* (voxels voxs) (pos-int ix iy iz) (boolean v))
-  (setf (aref (the (array boolean) (voxels-a voxs)) (1+ ix) (1+ iy) (1+ iz)) v))
+(defun setvoxel (voxs ix iy iz &optional (v 1))
+  (declare #.*opt-settings* (voxels voxs) (pos-int ix iy iz) (pos-int v))
+  (setf (aref (the pos-arr (voxels-a voxs)) (1+ ix) (1+ iy) (1+ iz)) v))
 
 
 (declaim (inline -make-pos-vec))

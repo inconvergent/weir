@@ -10,12 +10,14 @@
                  (aref imap (+ i 2)) (+ iz (aref *offsets* (+ i 2))))))
 
 (declaim (inline -get-cubeindex))
-(defun -get-cubeindex (a imap)
-  (declare #.*opt-settings* (type (array boolean) a) (pos-vec imap))
+(defun -get-cubeindex (a imap low high)
+  (declare #.*opt-settings* (pos-arr a) (pos-vec imap) (pos-int low high))
   (loop with ind of-type pos-int = 0
         for i of-type pos-int from 0 below 24 by 3
         for b of-type pos-int from 0
-        do (when (aref a (aref imap i) (aref imap (1+ i)) (aref imap (+ i 2)))
+        do (when (>= high (aref a (aref imap i) (aref imap (1+ i))
+                                  (aref imap (+ i 2)))
+                    low)
                  (incf ind (the pos-int (expt (the pos-int 2) (the pos-int b)))))
         finally (return ind)))
 
@@ -53,7 +55,7 @@
 (declaim (inline -intersect))
 (defun -intersect (p1 p2 v1 v2)
   (declare #.*opt-settings* (vec:3vec p1 p2) (double-float v1 v2))
-  (vec:3add! (vec:3smult! (vec:3sub p2 p1) (/ (- 0.5d0 v1) (- v2 v1))) p1))
+  (vec:3smult (vec:3add! (vec:3smult p1 v1) (vec:3smult p2 v2)) (/ (+ v1 v2))))
 
 (declaim (inline -vert->pos))
 (defun -vert->pos (ix iy iz)
@@ -61,19 +63,27 @@
   (vec:3vec (coerce ix 'double-float) (coerce iy 'double-float)
             (coerce iz 'double-float)))
 
-(declaim (inline -get-pos))
-(defun -get-pos (a e)
-  (declare #.*opt-settings* (type (array boolean) a) (list e))
+(declaim (inline -get-pos-weighted))
+(defun -get-pos-weighted (a e)
+  (declare #.*opt-settings* (pos-arr a) (list e))
   (destructuring-bind (v1 v2) e
+    (declare (list v1 v2))
     (vec:3add! (-intersect (apply #'-vert->pos v1) (apply #'-vert->pos v2)
-                           (if (apply #'aref a v1) 1d0 0d0)
-                           (if (apply #'aref a v2) 1d0 0d0))
+                           (coerce (apply #'aref a v1) 'double-float)
+                           (coerce (apply #'aref a v2) 'double-float))
                *shift*)))
 
+(declaim (inline -get-pos-mid))
+(defun -get-pos-mid (a e)
+  (declare #.*opt-settings* (ignore a) (list e))
+  (destructuring-bind (v1 v2) e
+    (declare (list v1 v2))
+    (vec:3add! (vec:3mid (apply #'-vert->pos v1) (apply #'-vert->pos v2)) *shift*)))
+
+
 (declaim (inline -add-poly))
-(defun -add-poly (a edge->vert msh tri)
-  (declare #.*opt-settings* (type (array boolean) a)
-                            (hash-table edge->vert) (list tri))
+(defun -add-poly (a edge->vert msh tri posfx)
+  (declare #.*opt-settings* (pos-arr a) (hash-table edge->vert) (list tri))
   (mesh:add-polygon! msh
     (loop for e of-type list in tri
           collect (let ((h (-hash-edge e)))
@@ -81,12 +91,13 @@
                     (multiple-value-bind (v exists) (gethash h edge->vert)
                       (declare (boolean exists))
                       (if exists v (setf (gethash h edge->vert)
-                                         (mesh:add-vert! msh (-get-pos a e))))))
+                                         (mesh:add-vert! msh
+                                           (funcall (the function posfx) a e))))))
                   of-type pos-int)))
 
 (declaim (inline -make-poly))
 (defun -make-poly (imap voxellist cubeindex i)
-  (declare (pos-vec imap voxellist) (pos-int cubeindex i))
+  (declare #.*opt-settings* (pos-vec imap voxellist) (pos-int cubeindex i))
   (loop for k of-type pos-int from 0 below 3
         collect (let ((i2 (* 2 (aref *triangles* cubeindex (+ i k)))))
                   (declare (pos-int i2))
@@ -95,35 +106,39 @@
                 of-type list))
 
 (declaim (inline -add-polys))
-(defun -add-polys (a edge->vert imap voxellist cubeindex msh)
-  (declare #.*opt-settings* (type (array boolean) a)
-                            (pos-vec imap voxellist) (pos-int cubeindex)
-                            (hash-table edge->vert))
+(defun -add-polys (a edge->vert imap voxellist cubeindex msh posfx)
+  (declare #.*opt-settings* (pos-arr a) (pos-vec imap voxellist)
+                            (pos-int cubeindex) (hash-table edge->vert))
   (loop for i of-type pos-int from 0 by 3
         until (= (aref *triangles* cubeindex i) 99)
         do (-add-poly a edge->vert msh
-             (-make-poly imap voxellist cubeindex i))))
+             (-make-poly imap voxellist cubeindex i)
+             posfx)))
 
 
-(defun get-mesh (voxs)
-  (declare #.*opt-settings* (voxels voxs))
+(defun get-mesh (voxs &key (low 1) (high 1) (weighted nil) (max-verts 10000000))
+  (declare #.*opt-settings* (voxels voxs) (pos-int low high max-verts))
+  "
+  reconstruct mesh at the isosurfaces of [low high] (inclusive).
+  "
   (let ((imap (-make-pos-vec 24))
         (voxellist (-make-pos-vec 24))
         (a (voxels-a voxs))
-        (edge->vert (make-hash-table :test #'equal))
-        (msh (mesh:make :max-verts (voxels-max-verts voxs))))
-    (declare (pos-vec imap voxellist) (type (array boolean) a)
-             (hash-table edge->vert))
+        (edge->vert (make-hash-table :test #'equal :size 1024 :rehash-size 2f0))
+        (msh (mesh:make :max-verts max-verts))
+        (posfx (if weighted #'-get-pos-weighted #'-get-pos-mid)))
+    (declare (pos-vec imap voxellist) (pos-arr a) (hash-table edge->vert)
+             (function posfx))
     (loop for ix of-type pos-int from 0 to (voxels-nx voxs)
           do (loop for iy of-type pos-int from 0 to (voxels-ny voxs)
                    do (loop for iz of-type pos-int from 0 to (voxels-nz voxs)
                             do (-set-imap imap ix iy iz)
-                               (let* ((cubeindex (-get-cubeindex a imap))
+                               (let* ((cubeindex (-get-cubeindex a imap low high))
                                       (ec (aref *edges* cubeindex)))
                                  (declare (pos-int ec cubeindex))
                                  (unless (or (= ec 0) (= ec 255))
                                    (-set-voxel-list voxellist ec)
-                                   (-add-polys a edge->vert imap
-                                               voxellist cubeindex msh))))))
+                                   (-add-polys a edge->vert imap voxellist
+                                               cubeindex msh posfx))))))
     msh))
 

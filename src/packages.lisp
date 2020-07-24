@@ -867,6 +867,7 @@
   (:use #:common-lisp)
   (:export
     #:get-mesh
+    #:file-load
     #:getvoxel
     #:make
     #:setvoxel)
