@@ -43,8 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 3. Some code suggested by @lispm (in src/auxiliary/dat.lisp, src/various.lisp). There
 are links to the original suggestions
 
-4. The Utah Teapot is included in examples/teapot.obj.
-
 ---------
 
 The MIT License (MIT)

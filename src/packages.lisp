@@ -204,6 +204,7 @@
     #:norm-reflect
     #:norm-reject
     #:nsub
+    #:nxn
     #:on-circ
     #:on-line
     #:perp
@@ -298,7 +299,6 @@
     #:make-rayfx
     #:pan-cam
     #:pan-xy
-    #:parallel-pixel-render
     #:project
     #:project*
     #:project-offset
@@ -458,12 +458,10 @@
   (:use #:common-lisp)
   (:export
     #:awith
-    #:kset
+    #:lget
+    #:lset
     #:make
-    #:mget
-    #:mset
     #:sget
-    #:sset
     #:with)
   (:import-from #:weir-utils))
 
@@ -720,24 +718,6 @@
     #:vextend
     #:with-struct))
 
-(defpackage #:bvh
-  (:use #:common-lisp)
-  (:export
-    #:bvh
-    #:bvh-normals
-    #:bvh-root
-    #:make-line-bbox-test
-    #:make-result
-    #:node
-    #:node-l
-    #:node-leaves
-    #:node-ma
-    #:node-mi
-    #:node-r)
-  (:import-from #:weir-utils
-    #:*opt-settings*
-    #:numshow))
-
 (defpackage #:sandpaint
   (:use #:common-lisp)
   (:export
@@ -803,100 +783,6 @@
     #:to-list
     #:to-vector
     #:vector-last
-    #:vextend
-    #:with-struct))
-
-(defpackage #:mesh
-  (:use #:common-lisp)
-  (:export
-    #:add-box!
-    #:add-face!
-    #:add-open-box!
-    #:add-polygon!
-    #:add-polygons!
-    #:add-polyhedra!
-    #:add-rect!
-    #:add-vert!
-    #:add-verts!
-    #:bvhres
-    #:bvhres-i
-    #:bvhres-n
-    #:bvhres-pt
-    #:bvhres-s
-    #:center!
-    #:del-polygon!
-    #:edge-length
-    #:extrude-polygon!
-    #:get-all-edges
-    #:get-all-polygons
-    #:get-all-verts
-    #:get-edge-polygons
-    #:get-num-edges
-    #:get-num-polygons
-    #:get-num-verts
-    #:get-polygon-edges
-    #:get-vert
-    #:get-verts
-    #:make
-    #:make-bvh
-    #:make-cone-light
-    #:make-hidden-fx
-    #:make-raytracer
-    #:make-refraction-raytracer
-    #:make-unhidden-line-fx
-    #:make-vert-getter
-    #:move-vert!
-    #:normal
-    #:obj-export
-    #:obj-load
-    #:polyx
-    #:raycast
-    #:refract-or-reflect
-    #:transform!
-    #:transform*!)
-  (:import-from #:weir-utils
-    #:*opt-settings*
-    #:ensure-filename
-    #:make-adjustable-vector
-    #:to-list
-    #:to-vector
-    #:vextend
-    #:with-struct))
-
-(defpackage #:voxels
-  (:use #:common-lisp)
-  (:export
-    #:get-mesh
-    #:file-load
-    #:getvoxel
-    #:make
-    #:setvoxel)
-  (:import-from #:weir-utils
-    #:*opt-settings*
-    #:make-adjustable-vector
-    #:to-list
-    #:to-vector
-    #:vextend
-    #:with-struct))
-
-(defpackage #:point-cloud
-  (:use #:common-lisp)
-  (:export
-    #:bvhres
-    #:bvhres-i
-    #:bvhres-s
-    #:get-color
-    #:get-num-points
-    #:make
-    #:make-bvh
-    #:make-point-getter
-    #:raycast
-    #:update-result)
-  (:import-from #:weir-utils
-    #:*opt-settings*
-    #:make-adjustable-vector
-    #:to-list
-    #:to-vector
     #:vextend
     #:with-struct))
 

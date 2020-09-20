@@ -1,10 +1,35 @@
 
 (in-package :vec)
 
-(declaim (type double-float PII) (vec:vec *one* *zero*))
+(declaim (type double-float PII) (vec *one* *zero*))
 (defconstant PII  #.(* PI 2d0))
 (defparameter *one* #.(vec 1d0 1d0))
 (defparameter *zero* #.(vec 0d0 0d0))
+
+
+(defmacro nxn ((p &key nx sx ny sy mid bx by) &body body)
+  (alexandria:with-gensyms (x y nx* ny** ny* sx* sy** sy*
+                            bx* by** by* mid* mid** mx* my*)
+    `(let* ((,nx* ,nx) (,sx* ,sx)
+            (,ny** ,ny) (,sy** ,sy)
+            (,bx* ,bx) (,by** ,by)
+            (,mid** ,mid)
+            (,ny* (if ,ny** ,ny** ,nx*))
+            (,sy* (if ,sy** ,sy** ,sx*))
+            (,by* (if ,by** ,by** ,bx*))
+            (,mid* (if ,mid** ,mid** (zero)))
+            (,mx* (vec-x ,mid*))
+            (,my* (vec-y ,mid*)))
+      (declare (fixnum ,nx* ,ny*) (double-float ,sx* ,sy*) (vec ,mid*))
+      (loop for ,x of-type double-float
+              in (math:linspace ,nx* (- ,mx* ,sx* (- ,bx*))
+                                     (+ ,mx* ,sx* (- ,bx*)))
+            do (loop for ,y of-type double-float
+                       in (math:linspace ,ny* (- ,my* ,sy* (- ,by*))
+                                              (+ ,my* ,sy* (- ,by*)))
+                     do (let ((,p (vec ,x ,y)))
+                          (declare (vec ,p))
+                          (progn ,@body)))))))
 
 
 (declaim (inline to-list))
@@ -78,7 +103,7 @@
 (declaim (inline from!))
 (defun from! (a b s)
   (declare #.*opt-settings* (double-float s) (vec a b))
-  (vec:add! a (vec:smult b s)))
+  (add! a (smult b s)))
 
 
 (declaim (inline neg))
@@ -229,9 +254,9 @@
 (declaim (inline lsum))
 (defun lsum (l)
   (declare #.*opt-settings* (list l))
-  (loop with res = (vec:zero)
+  (loop with res = (zero)
         for a in l
-        do (vec:add! res a)
+        do (add! res a)
         finally (return res)))
 
 
@@ -343,9 +368,10 @@
           ; this is just a div0 guard. it's not a good way to test.
           (values nil 0d0 0d0)
           ; otherwise check if they intersect
-          (let ((p (/ (cross sa #1=(sub a1 b1)) u))
-                (q (/ (cross sb #1#) u)))
-            (declare (double-float p q))
+          (let* ((ab (sub a1 b1))
+                 (p (/ (cross sa ab) u))
+                 (q (/ (cross sb ab) u)))
+            (declare (vec ab) (double-float p q))
             ; t if intersection, nil otherwise
             (values (and (> p 0d0) (< p 1d0) (> q 0d0) (< q 1d0))
                     q p)))))))

@@ -88,7 +88,7 @@ Main components:
    ; pick a random point between points va and vb
    (rnd:on-line va vb)
 
-   ; ececute a form with a certain probability
+   ; execute a form with a certain probability
    ; second form is optional
    (rnd:prob 0.1d0 (print "10% hi") (print "90% oh no"))
 
@@ -195,9 +195,6 @@ Main components:
 7. A tool for drawing `pngs` called `sandpaint`. This package uses random
    sampling to draw. This creates a fairly distinct and gritty look in many
    cases. Also supports direct pixel manipulations and a few filters.
-
-8. Some simple raytracing functionality for triangle meshes `mesh` and point
-   clouds `point-cloud`. This is immature and slow.
 
 
 ## Weir Graphs and Alterations

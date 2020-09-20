@@ -11,8 +11,8 @@
   (symbols (make-hash-table :test #'equal) :read-only t))
 
 
-(defun make (&key (fn (internal-path-string "gridfont/smooth")) (scale 1d0)
-                  (nl 13d0) (sp 1d0) (xy (vec:zero)))
+(defun make (&key (fn (internal-path-string "src/gridfont/smooth"))
+                  (scale 1d0) (nl 13d0) (sp 1d0) (xy (vec:zero)))
   (with-open-file (fstream (ensure-filename fn ".json" t)
                            :direction :input)
     (loop with res = (make-hash-table :test #'equal)

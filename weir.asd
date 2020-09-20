@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "3.88.0"
+  :version "4.0.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -30,7 +30,6 @@
                (:file "math/curvature")
                (:file "project/perspective")
                (:file "project/ortho")
-               (:file "project/raytrace")
                (:file "draw/cpath")
                (:file "math/path")
                (:file "math/simplify-path")
@@ -57,21 +56,6 @@
                (:file "draw/draw-svg")
                (:file "distance/zonemap")
                (:file "distance/kdtree")
-               (:file "distance/bvh")
-               (:file "mesh/mesh")
-               (:file "mesh/vert-utils")
-               (:file "mesh/shapes")
-               (:file "mesh/lights")
-               (:file "mesh/obj")
-               (:file "mesh/bvh")
-               (:file "mesh/line")
-               (:file "mesh/raytracer")
-               (:file "mesh/raytracer-refract")
-               (:file "voxel/init")
-               (:file "voxel/voxel")
-               (:file "voxel/load")
-               (:file "point-cloud/main")
-               (:file "point-cloud/bvh")
                (:file "weir/weir")
                (:file "weir/vert-utils")
                (:file "weir/planar-cycles")
@@ -95,8 +79,6 @@
                (:file "kdtree")
                (:file "linear-path")
                (:file "math")
-               (:file "mesh")
-               (:file "voxel")
                (:file "ortho")
                (:file "parallel")
                (:file "pigment")
@@ -105,7 +87,6 @@
                (:file "plot-outline-path")
                (:file "plot-simplify")
                (:file "plot")
-               (:file "point-cloud")
                (:file "rnd")
                (:file "sandpaint")
                (:file "vec")
