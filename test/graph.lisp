@@ -12,7 +12,7 @@
 
     (do-test (graph:add grph 2 1) nil)
 
-    (do-test (graph:get-num-edges grph) 4)
+    (do-test (graph:get-num-edges grph) 2)
 
     (do-test (graph:get-edges grph) '((1 2) (1 1)))
 
@@ -26,7 +26,7 @@
 
     (do-test (graph:get-edges grph) '((5 20) (1 1)))
 
-    (do-test (graph:get-num-edges grph) 4)
+    (do-test (graph:get-num-edges grph) 2)
 
     (do-test (graph:mem grph 1 4) nil)
 

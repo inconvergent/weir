@@ -8,16 +8,17 @@
 
 (defstruct (weir (:constructor -make-weir))
   (name :main :type symbol :read-only t)
-  (wc 0 :type pos-int)
-  (verts nil :type simple-array)
-  (num-verts 0 :type pos-int)
-  (zonemap nil)
-  (kd nil)
+  (adj-size 100 :type pos-int :read-only t)
+  (alt-res (make-hash-table :test #'equal :size 20 :rehash-size 2f0))
   (dim 2 :type pos-int :read-only t)
-  (grps (make-hash-table :test #'equal))
+  (grps (make-hash-table :test #'equal :size 20 :rehash-size 2f0))
   (max-verts 5000 :type pos-int :read-only t)
+  (num-verts 0 :type pos-int)
   (set-size 5 :type pos-int :read-only t)
-  (adj-size 100 :type pos-int :read-only t))
+  (verts nil :type simple-array)
+  (wc 0 :type pos-int)
+  (kd nil)
+  (zonemap nil))
 
 
 (defstruct (grp (:constructor -make-grp))
@@ -32,238 +33,21 @@
   (declare #.*opt-settings* (weir wer))
   (typecase x (function (funcall (the function x) wer))))
 
-(defmacro with ((wer accfx &key kd zwidth collect) &body body)
-  "
-  creates a context for manipulating weir via alterations.
 
-  example:
+(defun exec-alt (wer x)
+  (declare #.*opt-settings* (weir wer))
+  (-exec-alt wer x))
 
-    (weir:with (wer %)
-      (% (weir:add-edge? ...)))
-
-  all (% ...) forms inside the weir context will cause the alteration inside to
-  be executed, and collected. if it is nil, nothing happens.
-  "
-  (declare (symbol wer accfx))
-  (alexandria:with-gensyms (wname kdname zw x res alts do-alts)
-    `(let* ((,wname ,wer)
-            (,zw ,zwidth)
-            (,alts (list))
-            (,kdname ,kd))
-      (declare (list ,alts))
-
-      ; build-zonemap and 3build-kdtree will test if the dimension is correct
-      ,(when zwidth `(build-zonemap ,wname ,zw))
-      ,(when kd `(3build-kdtree ,wname))
-
-      (incf (weir-wc ,wname))
-
-      (labels ((,do-alts ()
-                (loop for ,x in ,alts
-                      ,(if collect 'collect 'do) (-exec-alt ,wname ,x)))
-               (,accfx (,x) (when ,x (push ,x ,alts))))
-
-        (progn ,@body)
-
-        (let ((,res (,do-alts)))
-          (declare (list ,res))
-          ,(when zwidth `(setf (weir-zonemap ,wname) nil))
-          ,(when kd `(setf (weir-kd ,wname) nil))
-          ,res)))))
+(defun lexec-alt (wer alts &key collect)
+  (declare #.*opt-settings* (weir wer))
+  (if collect (loop for x in alts collect (-exec-alt wer x))
+              (loop for x in alts do (-exec-alt wer x))))
 
 
-(defmacro with-verts-in-rad ((wer xy rad v) &body body)
-  (declare (symbol wer))
-  (alexandria:with-gensyms (wname)
-    `(let ((,wname ,wer))
-      (zonemap:with-verts-in-rad ((weir-zonemap ,wname)
-                                  (weir-verts ,wname) ,xy ,rad ,v)
-        (progn ,@body)))))
-
-
-(defmacro with-grp ((wer g* g) &body body)
-  "select grp g from weir instance. g will be available in this context as g*"
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grps exists gname wname)
-    `(let ((,wname ,wer)
-           (,gname ,g))
-      (let ((,grps (weir-grps ,wname)))
-        (multiple-value-bind (,g* ,exists)
-          (gethash ,gname ,grps)
-            (unless ,exists
-                    (error "attempted to access invalid group: ~a" ,gname))
-            (progn ,@body))))))
-
-
-(defmacro with-rnd-edge ((wer i &key g) &body body)
-  "
-  select an arbitrary edge from a weir instance. the edge will be
-  available in the context as i.
-
-  if a grp, g, is supplied it will select an edge from g, otherwise it will use
-  the main grp.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grp edges grph ln)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,grph (grp-grph ,grp)))
-        (let* ((,edges (to-vector (graph:get-edges ,grph)))
-               (,ln (length ,edges)))
-          (declare (pos-int ,ln))
-          (when (> ,ln 0)
-                (let ((,i (aref ,edges (rnd:rndi ,ln))))
-                  (declare (list ,i))
-                  (progn ,@body))))))))
-
-
-(defmacro with-rnd-vert ((wer i) &body body)
-  "
-  select an arbitrary vert from a weir instance. the vert will be available in
-  the context as i.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (num)
-    `(let ((,num (weir-num-verts ,wer)))
-       (when (> ,num 0)
-             (let ((,i (rnd:rndi ,num)))
-               (declare (pos-int ,i))
-               (progn ,@body))))))
-
-
-(defmacro itr-verts ((wer i &key collect) &body body)
-  "iterates over ALL verts in wer as i"
-  (declare (symbol wer) (boolean collect))
-  (alexandria:with-gensyms (wname)
-    `(let ((,wname ,wer))
-      (loop for ,i of-type pos-int from 0 below (weir-num-verts ,wname)
-            ,(if collect 'collect 'do)
-              (progn ,@body)))))
-
-
-(defmacro itr-grp-verts ((wer i &key g collect) &body body)
-  "
-  iterates over all verts in grp g as i.
-
-  NOTE: this will only yield vertices that belong to at least one edge that is
-  part of g. if you want all vertices in weir you should use itr-verts instead.
-  itr-verts is also faster, since it does not rely on the underlying graph
-  structure.
-
-  if g is not provided, the main grp wil be used.
-  "
-  (declare (symbol wer) (boolean collect))
-  (alexandria:with-gensyms (grp wname)
-    `(let ((,wname ,wer))
-      (with-grp (,wname ,grp ,g)
-        (map ',(if collect 'list 'nil)
-             (lambda (,i) (declare (pos-int ,i))
-               (progn ,@body))
-             (graph:get-verts (grp-grph ,grp)))))))
-
-
-(defmacro itr-edges ((wer i &key g collect) &body body)
-  "
-  iterates over all edges in grp g as i.
-  if g is not provided, the main grp will be used.
-  "
-  (declare (symbol wer) (boolean collect))
-  (alexandria:with-gensyms (grp grph)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,grph (grp-grph ,grp)))
-        (map ',(if collect 'list 'nil)
-             (lambda (,i)
-               (progn ,@body))
-             (graph:get-edges ,grph))))))
-
-; TODO: this is slower for some reason
-;(defmacro itr-edges* ((wer i &key g) &body body)
-;  "
-;  iterates over all edges in grp g as i.
-;  if g is not provided, the main grp will be used.
-;  "
-;  (declare (symbol wer))
-;  (alexandria:with-gensyms (grp grph)
-;    `(with-grp (,wer ,grp ,g)
-;      (let ((,grph (grp-grph ,grp)))
-;        (graph:with-graph-edges (,grph ,i)
-;          (progn ,@body))))))
-
-
-(defmacro itr-edge-verts ((wer vv &key g) &body body)
-  "
-  iterates over all edges (as verts) in grp g as i.
-  if g is not provided, the main grp will be used.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grp grph e)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,vv nil)
-            (,grph (grp-grph ,grp)))
-        (graph:with-graph-edges (,grph ,e)
-          (setf ,vv (get-verts ,wer ,e))
-          (progn ,@body))))))
-
-
-(defmacro itr-edge-verts* ((wer ee vv &key g) &body body)
-  "
-  iterates over all edges (as verts) in grp g as i.
-  if g is not provided, the main grp will be used.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grp grph)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,vv nil)
-            (,grph (grp-grph ,grp)))
-        (graph:with-graph-edges (,grph ,ee)
-          (setf ,vv (get-verts ,wer ,ee))
-          (progn ,@body))))))
-
-
-(defmacro 3itr-edge-verts ((wer vv &key g) &body body)
-  "
-  iterates over all edges (as verts) in grp g as i.
-  if g is not provided, the main grp will be used.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grp grph e)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,vv nil)
-            (,grph (grp-grph ,grp)))
-        (graph:with-graph-edges (,grph ,e)
-          (setf ,vv (3get-verts ,wer ,e))
-          (progn ,@body))))))
-
-
-(defmacro 3itr-edge-verts* ((wer ee vv &key g) &body body)
-  "
-  iterates over all edges (as verts) in grp g as i.
-  if g is not provided, the main grp will be used.
-  "
-  (declare (symbol wer))
-  (alexandria:with-gensyms (grp grph)
-    `(with-grp (,wer ,grp ,g)
-      (let ((,vv nil)
-            (,grph (grp-grph ,grp)))
-        (graph:with-graph-edges (,grph ,ee)
-          (setf ,vv (3get-verts ,wer ,ee))
-          (progn ,@body))))))
-
-
-(defmacro itr-grps ((wer g &key collect main) &body body)
-  "iterates over all grps of wer as g"
-  (declare (symbol wer) (boolean collect))
-  (alexandria:with-gensyms (grps wname main*)
-    `(let ((,wname ,wer)
-           (,main* ,main))
-      (let ((,grps (weir-grps ,wname)))
-        (loop for ,g being the hash-keys of ,grps
-          if (or ,main* ,g)
-          ,(if collect 'collect 'do)
-          (progn ,@body))))))
 
 
 (defun -make-hash-table (&key init (test #'equal))
-  (declare (list init) (function test))
+  (declare #.*opt-settings* (list init) (function test))
   (loop with res = (make-hash-table :test test)
         for (k v) in init
         do (setf (gethash k res) v)
@@ -297,7 +81,8 @@
                                                       :set-size set-size)))))))
 
 
-(defun add-grp! (wer &key type name props &aux (name* (if name name (gensym))))
+(defun add-grp! (wer &key type name props
+                     &aux (name* (if name name (gensym "grp"))))
   "
   constructor for grp instances.
 
@@ -318,7 +103,7 @@
 
   the grp functionality is somewhat experimental.
   "
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (with-struct (weir- grps adj-size set-size) wer
     (multiple-value-bind (v exists) (gethash name* grps)
       (declare (ignore v) (boolean exists))
@@ -332,8 +117,22 @@
   name*)
 
 (defun del-grp! (wer &key g)
-  (declare (symbol g))
+  (declare #.*opt-settings* (symbol g))
   (remhash g (weir-grps wer)))
+
+
+(defmacro with-grp ((wer g* g) &body body)
+  "select grp g from weir instance. g will be available in this context as g*"
+  (declare (symbol wer))
+  (alexandria:with-gensyms (grps exists gname wname)
+    `(let ((,wname ,wer)
+           (,gname ,g))
+      (let ((,grps (weir-grps ,wname)))
+        (multiple-value-bind (,g* ,exists)
+          (gethash ,gname ,grps)
+            (unless ,exists
+                    (error "attempted to access invalid group: ~a" ,gname))
+            (progn ,@body))))))
 
 
 (defmacro -valid-vert ((num v &key (err t)) &body body)
@@ -356,18 +155,18 @@
 
 
 (defun get-grp-props (wer &key g)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (grp-props (get-grp wer :g g)))
 
 
 (defun set-grp-props! (wer v &key g)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (setf (grp-props (get-grp wer :g g)) v))
 
 
 (defun get-all-grps (wer &key main)
   "returns all grps. use :main t to include main/nil grp"
-  (declare (weir wer) (boolean main))
+  (declare #.*opt-settings* (weir wer) (boolean main))
   (loop for g being the hash-keys of (weir-grps wer)
         ; ignores nil (main) grp, unless overridden with :main t
         if (or g main) collect g))
@@ -375,30 +174,30 @@
 
 (defun get-grp (wer &key g)
   "returns the grp g. if g is not provided, the main/nil grp will be returned"
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (gethash g (weir-grps wer)))
 
 
 (defun get-num-edges (wer &key g)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (with-grp (wer g* g)
     (graph:get-num-edges (grp-grph g*))))
 
 
 (defun get-num-grps (wer)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (1- (hash-table-count (weir-grps wer))))
 
 
 (defun get-edges (wer &key g)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (with-grp (wer g* g)
     (graph:get-edges (grp-grph g*))))
 
 
 ; TODO: get-all-incident-edges (not just in grp g)?
 (defun get-incident-edges (wer v &key g)
-  (declare (weir wer) (pos-int v))
+  (declare #.*opt-settings* (weir wer) (pos-int v))
   (with-grp (wer g* g)
     (graph:get-incident-edges (grp-grph g*) v)))
 
@@ -417,7 +216,7 @@
 
 
 (defun edge-exists (wer ee &key g)
-  (declare (weir wer) (list ee))
+  (declare #.*opt-settings* (weir wer) (list ee))
   (with-grp (wer g* g)
     (apply #'graph:mem (grp-grph g*) ee)))
 
@@ -429,7 +228,7 @@
 
   returns nil if the edge exists already.
   "
-  (declare (weir wer) (pos-int a b))
+  (declare #.*opt-settings* (weir wer) (pos-int a b))
   (when (= a b) (return-from add-edge! nil))
   (with-grp (wer g* g)
     (with-struct (weir- num-verts) wer
@@ -441,7 +240,7 @@
 
 
 (defun ladd-edge! (wer ee &key g)
-  (declare (weir wer) (list ee))
+  (declare #.*opt-settings* (weir wer) (list ee))
   (destructuring-bind (a b) ee
     (declare (pos-int a b))
     (add-edge! wer a b :g g)))
@@ -449,32 +248,32 @@
 
 (defun add-edges! (wer ee &key g)
   "adds multiple edges (see above). returns a list of the results"
-  (declare (weir wer) (list ee))
+  (declare #.*opt-settings* (weir wer) (list ee))
   (loop for e of-type list in ee collect (ladd-edge! wer e :g g)))
 
 
 (defun del-edge! (wer a b &key g)
-  (declare (weir wer) (pos-int a b))
+  (declare #.*opt-settings* (weir wer) (pos-int a b))
   (with-grp (wer g* g)
     (with-struct (grp- grph) g*
       (graph:del grph a b))))
 
 
 (defun ldel-edge! (wer ee &key g)
-  (declare (weir wer) (list ee))
+  (declare #.*opt-settings* (weir wer) (list ee))
   (with-grp (wer g* g)
     (with-struct (grp- grph) g*
       (apply #'graph:del grph ee))))
 
 
 (defun split-edge-ind! (wer a b &key via g)
-  (declare (weir wer) (pos-int a b via))
+  (declare #.*opt-settings* (weir wer) (pos-int a b via))
   (when (del-edge! wer a b :g g)
         (list (add-edge! wer a via :g g)
               (add-edge! wer via b :g g))))
 
 (defun lsplit-edge-ind! (wer ee &key via g)
-  (declare (weir wer) (list ee) (pos-int via))
+  (declare #.*opt-settings* (weir wer) (list ee) (pos-int via))
   (destructuring-bind (a b) ee
     (declare (pos-int a b))
     (split-edge-ind! wer a b :via via :g g)))
@@ -482,7 +281,7 @@
 
 (declaim (inline -roll-once))
 (defun -roll-once (aa)
-  (declare (list aa))
+  (declare #.*opt-settings* (list aa))
   (butlast (append (last aa) aa) 1))
 
 (defun add-path-ind! (wer vv &key g closed)

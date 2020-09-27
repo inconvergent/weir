@@ -2,6 +2,8 @@
 (in-package :hset)
 
 "
+fixnum set
+
 this is a naive wrapper around hash-map. not sure how efficient it will be?
 "
 

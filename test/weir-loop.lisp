@@ -16,18 +16,13 @@
     (weir:relative-neighborhood! wer 500d0)
     (weir:center! wer :xy mid)
 
-    (weir:with (wer %)
-      (weir:itr-edges (wer e)
-        (draw-svg:path psvg (weir:get-verts wer e)
-                             :sw 2d0
-                             :stroke "black"
-                             :so 0.3d0)))
+    (weir:itr-edges (wer e)
+      (draw-svg:path psvg (weir:get-verts wer e) :sw 2d0
+                     :stroke "black" :so 0.3d0))
 
     (loop for edge in (weir:get-min-spanning-tree wer :start 0 :edges t)
-          do (draw-svg:path psvg (weir:get-verts wer edge)
-                            :stroke "red"
-                            :sw 3d0
-                            :so 1d0))
+          do (draw-svg:path psvg (weir:get-verts wer edge) :stroke "red"
+                            :sw 3d0 :so 1d0))
 
     (loop for lp in (weir:get-cycle-basis wer)
           do (draw-svg:path psvg (weir:get-verts wer (progn lp))
@@ -38,7 +33,8 @@
                              :sw 0.3d0
                              :rs 1d0))
 
-    (draw-svg:save psvg "data/weir-loops")))
+    (draw-svg:save psvg (weir-utils:internal-path-string
+                          "test/data/weir-loops"))))
 
 (define-file-tests test-weir-loop-draw ()
   ;; TODO: other cases: 8407 4445

@@ -1,6 +1,6 @@
 (in-package #:weir-tests)
 
-(defun %main-plot-simplify (size fn)
+(defun %main-plot-simplify ()
   (let ((psvg (draw-svg:make* :width 1000d0
                               :height 1000d0
                               :stroke-width 1d0
@@ -17,7 +17,8 @@
                                           :lim 10d0))
                           :width 10d0))))
 
-    (draw-svg:save psvg "data/plot-simplify")))
+    (draw-svg:save psvg (weir-utils:internal-path-string
+                          "test/data/plot-simplify"))))
 
 (define-file-tests test-plot-simplify ()
-  (time (%main-plot-simplify 1000 (second (cmd-args)))))
+  (time (%main-plot-simplify)))

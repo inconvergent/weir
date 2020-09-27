@@ -80,8 +80,10 @@
                    `(mapcar #',@fx ,aa ,bb)))))
 
 
-(defmacro broadcast-vec-op ((name &key itr-type res-type arg-types inplace) &body fx)
-  (let* ((pairs (loop for type in arg-types collect (list type (gensym))))
+(defmacro broadcast-vec-op ((name &key itr-type res-type arg-types inplace)
+                                  &body fx)
+  (let* ((pairs (loop for type in arg-types
+                      collect (list type (gensym "broadcast-vec-op-arg"))))
          (args (loop for (_ a) in pairs collect a)))
     (alexandria:with-gensyms (aa a)
       `(defun ,name (,aa ,@args)

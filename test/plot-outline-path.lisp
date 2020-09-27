@@ -1,7 +1,7 @@
 (in-package #:weir-tests)
 
 
-(defun %main-plot-outline-path (size fn)
+(defun %main-plot-outline-path ()
   (let ((psvg (draw-svg:make*)))
 
     (draw-svg:path psvg (cpath:outline (list (vec:vec 100d0 300d0)
@@ -29,7 +29,8 @@
           do (draw-svg:path psvg path))
 
 
-    (draw-svg:save psvg "data/plot-outline-path")))
+    (draw-svg:save psvg (weir-utils:internal-path-string
+                          "test/data/plot-outline-path"))))
 
 (define-file-tests test-plot-outline-path ()
-  (time (%main-plot-outline-path 1000 (second (cmd-args)))))
+  (time (%main-plot-outline-path)))

@@ -1,6 +1,7 @@
 
 (in-package #:weir-tests)
 
+
 (defun test-weir (wer)
 
   (do-test (weir:add-vert! wer (vec:vec 0d0 0d0)) 0)
@@ -118,7 +119,7 @@
 
   (do-test (weir:lsplit-edge! wer '(3 1) :xy (vec:vec 1d0 2d0)) 4)
 
-  (do-test (weir:get-num-edges wer) 4)
+  (do-test (weir:get-num-edges wer) 2)
 
   (do-test (weir:get-num-verts wer) 5))
 
@@ -166,9 +167,8 @@
 
 (defun test-weir-incident ()
   (let ((wer (init-weir)))
-    (do-test
-      (weir:get-incident-edges wer 1)
-      '((1 2) (0 1) (1 3)))
+    (do-test (weir:get-incident-edges wer 1)
+             '((1 2) (0 1) (1 3)))
 
     (do-test (weir:get-incident-edges wer 100) nil)))
 
@@ -176,7 +176,6 @@
 (defun test-weir-with ()
   (let ((wer (init-weir)))
     (weir:with (wer %)
-
       (% (weir:add-vert? (vec:vec 11d0 3d0)))
       (list 4.5
             (% (weir:move-vert? 0 (vec:vec 1d0 0d0)))
@@ -190,69 +189,82 @@
     (do-test (sort (weir:get-vert-inds wer) #'<)
              (list 0 1 2 3 5 6 7)))
 
-    (let ((wer (init-weir)))
+  (let ((wer (init-weir)))
 
-      (do-test (weir:edge-exists wer '(7 2)) nil)
+    (do-test (weir:edge-exists wer '(7 2)) nil)
 
-      (weir:with (wer %)
-        (list)
-        1 nil
-        (% (weir:add-vert? (vec:vec 12d0 3d0))) ; 12
-        (% (weir:add-vert? (vec:vec 13d0 6d0))) ; 11
-        (% (weir:add-edge? 1 2))
-        (% (weir:add-edge? 2 7))
-        (% nil))
+    (weir:with (wer %)
+      (list)
+      1 nil
+      (% (weir:add-vert? (vec:vec 12d0 3d0))) ; 12
+      (% (weir:add-vert? (vec:vec 13d0 6d0))) ; 11
+      (% (weir:add-edge? 1 2))
+      (% (weir:add-edge? 2 7)))
 
-      (do-test (weir:get-vert wer 12) (vec:vec 12d0 3d0))
-      (do-test (weir:get-vert wer 11) (vec:vec 13d0 6d0))
+    (do-test (weir:get-vert wer 12) (vec:vec 12d0 3d0))
+    (do-test (weir:get-vert wer 11) (vec:vec 13d0 6d0))
 
-      (do-test (weir:edge-exists wer '(1 2)) t)
-      (do-test (weir:edge-exists wer '(2 7)) t)
-      (do-test (weir:edge-exists wer '(7 2)) t)))
+    (do-test (weir:edge-exists wer '(1 2)) t)
+    (do-test (weir:edge-exists wer '(2 7)) t)
+    (do-test (weir:edge-exists wer '(7 2)) t))
+
+  (let ((wer (weir:make)))
+    (weir:with (wer %)
+      (% (weir:add-vert? (vec:vec 1d0 2d0)) :a)
+      (% (weir:add-vert? (vec:vec 2d0 2d0)) :b)
+      (% (weir:add-edge? :a :b) (:a :b) :e1)
+      (% (weir:append-edge? (first :e1) (vec:vec 4d0 3d0)) :e2 (:e1)))
+
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             '((:A 1) (:B 0) (:E1 (0 1)) (:E2 2)))))
+
+(defun make-sfx-weir ()
+  (let ((wer (weir:make)))
+    (weir:add-vert! wer (vec:vec 1d0 1d0))
+    (weir:add-vert! wer (vec:vec 2d0 2d0))
+    (weir:add-vert! wer (vec:vec 3d0 3d0))
+    wer))
 
 (defun test-weir-with-sfx ()
-  (let ((wer (weir:make)))
-      (weir:add-vert! wer (vec:vec 1d0 1d0))
-      (weir:add-vert! wer (vec:vec 2d0 2d0))
-      (weir:add-vert! wer (vec:vec 3d0 3d0))
+  ; these two cases demonstrate the "side-effect" of alterting the
+  ; graph sequentially while relying on the state of the graph
+  (let ((wer (make-sfx-weir)))
+    ; this exhibits "side-effects"
+    (weir:move-vert! wer 0 (apply #'vec:isub (weir:get-verts wer (list 1 0))))
+    (weir:move-vert! wer 1 (apply #'vec:isub (weir:get-verts wer (list 2 0))))
+    (do-test (weir:get-all-verts wer)
+             `(#s(vec:vec :x 0d0 :y 0d0) #s(vec:vec :x -1d0 :y -1d0)
+               #s(vec:vec :x 3d0 :y 3d0))))
 
-      (weir:with (wer %)
+  (let ((wer (make-sfx-weir)))
+    ; this exhibits "side-effects"
+    (weir:move-vert! wer 1 (apply #'vec:isub (weir:get-verts wer (list 2 0))))
+    (weir:move-vert! wer 0 (apply #'vec:isub (weir:get-verts wer (list 1 0))))
+    (do-test (weir:get-all-verts wer)
+             `(#s(vec:vec :x 2.0d0 :y 2.0d0) #s(vec:vec :x 0.0d0 :y 0.0d0)
+               #s(vec:vec :x 3.0d0 :y 3.0d0))))
+
+  ; these two cases demonstrate the expected behavoir of an alteration.
+  ; no "side effect" in the sense described above.
+  (let ((wer (make-sfx-weir)))
+    (weir:with (wer %)
+      ; alterations avoid side-effects
+      (% (weir:move-vert? 1 (apply #'vec:isub (weir:get-verts wer (list 2 0)))))
+      (% (weir:move-vert? 0 (apply #'vec:isub (weir:get-verts wer (list 1 0))))))
+    (do-test (weir:get-all-verts wer)
+             `(#s(vec:vec :x 0d0 :y 0d0) #s(vec:vec :x 0d0 :y 0d0)
+               #s(vec:vec :x 3d0 :y 3d0))))
+
+  (let ((wer (make-sfx-weir)))
+    (weir:with (wer %)
+      (labels ((move-vert (aa bb)
+                (lambda (w) (weir:move-vert! w aa bb))))
         ; alterations avoid side-effects
-        (% (weir:move-vert? 1 (apply #'vec:isub (weir:get-verts wer (list 2 0)))))
-        (% (weir:move-vert? 0 (apply #'vec:isub (weir:get-verts wer (list 1 0))))))
-
-      (do-test (weir:get-all-verts wer)
-               (list (vec:vec 0.0d0 0.0d0) (vec:vec 0.0d0 0.0d0)
-                     (vec:vec 3.0d0 3.0d0))))
-
-    (let ((wer (weir:make)))
-      (weir:add-vert! wer (vec:vec 1d0 1d0))
-      (weir:add-vert! wer (vec:vec 2d0 2d0))
-      (weir:add-vert! wer (vec:vec 3d0 3d0))
-      ; this exhibits side-effects
-      (weir:move-vert! wer 0 (apply #'vec:isub (weir:get-verts wer (list 1 0))))
-      (weir:move-vert! wer 1 (apply #'vec:isub (weir:get-verts wer (list 2 0))))
-      (do-test (weir:get-all-verts wer)
-               (list (vec:vec 0.0d0 0.0d0) (vec:vec -1.0d0 -1.0d0)
-                      (vec:vec 3.0d0 3.0d0))))
-
-    (let ((wer (weir:make)))
-      (weir:add-vert! wer (vec:vec 1d0 1d0))
-      (weir:add-vert! wer (vec:vec 2d0 2d0))
-      (weir:add-vert! wer (vec:vec 3d0 3d0))
-
-      (weir:with (wer %)
-        ; calculat a/b outside lambdas to avoid unfortunate side-effects.
-        ; this is less elegant than alterations, but quite flexible.
-        ; particularly if you design second-order functions
-        (let ((a (apply #'vec:isub (weir:get-verts wer (list 2 1))))
-              (b (apply #'vec:isub (weir:get-verts wer (list 1 0)))))
-          (% (lambda (w) (weir:move-vert! w 1 b)))
-          (% (lambda (w) (weir:move-vert! w 0 a)))))
-
-      (do-test (weir:get-all-verts wer)
-                (list (vec:vec 0.0d0 0.0d0) (vec:vec 1.0d0 1.0d0)
-                      (vec:vec 3.0d0 3.0d0)))))
+        (% (move-vert 1 (apply #'vec:isub (weir:get-verts wer (list 2 0)))))
+        (% (move-vert 0 (apply #'vec:isub (weir:get-verts wer (list 1 0)))))))
+    (do-test (weir:get-all-verts wer)
+             `(#s(vec:vec :x 0d0 :y 0d0) #s(vec:vec :x 0d0 :y 0d0)
+               #s(vec:vec :x 3d0 :y 3d0)))))
 
 
 (defun test-weir-add ()
@@ -264,11 +276,11 @@
 
     (do-test (weir:get-num-verts wer) 12)
 
-    (do-test
-      (weir:with (wer % :collect t)
-        (% (weir:add-vert? (vec:vec 80d0 3d0)))
-        (% (weir:add-vert? (vec:vec 70d0 3d0))))
-      '(12 13))
+    (weir:with (wer %)
+       (% (weir:add-vert? (vec:vec 80d0 3d0)) :a)
+       (% (weir:add-vert? (vec:vec 70d0 3d0)) :b))
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             `((:a 13) (:b 12)))
 
     (do-test (weir:get-num-verts wer) 14)
 
@@ -280,16 +292,14 @@
 
 (defun test-weir-move ()
   (let ((wer (init-weir)))
-    (do-test
-      (weir:with (wer % :collect t)
-        (% (weir:move-vert? 0 (vec:vec 3d0 3d0)))
-        (% (weir:move-vert? 1 (vec:vec 1d0 3d0)))
-        (% (weir:move-vert? 3 (vec:vec 2d0 3d0) :rel nil))
-        (% (weir:move-vert? 2 (vec:vec 3d0 4d0))))
-      (list (vec:vec 6.0d0 8.0d0)
-            (vec:vec 2.0d0 3.0d0)
-            (vec:vec 3.0d0 6.0d0)
-            (vec:vec 3.0d0 5.0d0)))
+    (weir:with (wer %)
+      (% (weir:move-vert? 0 (vec:vec 3d0 3d0)) :a)
+      (% (weir:move-vert? 1 (vec:vec 1d0 3d0)) :b)
+      (% (weir:move-vert? 3 (vec:vec 2d0 3d0) :rel nil) :c)
+      (% (weir:move-vert? 2 (vec:vec 3d0 4d0)) :d))
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             `((:a #s(vec:vec :x 3.0d0 :y 5.0d0)) (:b #s(vec:vec :x 3.0d0 :y 6.0d0))
+               (:c #s(vec:vec :x 2.0d0 :y 3.0d0)) (:d #s(vec:vec :x 6.0d0 :y 8.0d0))))
 
     (do-test (weir:get-vert wer 0) (vec:vec 3d0 5d0))
 
@@ -307,14 +317,13 @@
       (% (weir:add-edge? 3 6))
       (% (weir:add-edge? 7 1)))
 
-  (do-test (weir:get-num-edges wer) 14)
-
-  (do-test
-    (weir:with (wer % :collect t)
-      (% (weir:add-edge? 3 3))
-      (% (weir:add-edge? 1 6))
-      (% (weir:add-edge? 1 100)))
-    '(nil (1 6) nil))))
+  (do-test (weir:get-num-edges wer) 7)
+  (weir:with (wer %)
+    (% (weir:add-edge? 3 3) :a)
+    (% (weir:add-edge? 1 6) :b)
+    (% (weir:add-edge? 1 100) :c))
+  (do-test (sort-a-list (weir:get-alteration-result-list wer))
+           '((:a nil) (:b (1 6)) (:c nil)))))
 
 
 (defun test-weir-append ()
@@ -322,14 +331,15 @@
 
     (do-test (weir:get-num-verts wer) 11)
 
-    (do-test
-      (weir:with (wer % :collect t)
-        (% (weir:append-edge? 3 (vec:vec 3d0 4d0)))
-        (% (weir:append-edge? 3 (vec:vec 8d0 5d0) :rel nil))
-        (% (weir:append-edge? 7 (vec:vec 1d0 2d0))))
-      '(11 12 13))
+    (weir:with (wer %)
+      (% (weir:append-edge? 3 (vec:vec 3d0 4d0)) :a)
+      (% (weir:append-edge? 3 (vec:vec 8d0 5d0) :rel nil) :b)
+      (% (weir:append-edge? 7 (vec:vec 1d0 2d0)) :c))
 
-    (do-test (weir:get-num-edges wer) 16)
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             '((:a 13) (:b 12) (:c 11)))
+
+    (do-test (weir:get-num-edges wer) 8)
 
     (do-test (weir:get-num-verts wer) 14)
 
@@ -343,14 +353,14 @@
 
 (defun test-weir-split ()
   (let ((wer (init-weir)))
-    (do-test
-      (weir:with (wer % :collect t)
-        (% (weir:split-edge? 1 2 :xy (vec:vec 30d0 20d0)))
-        (% (weir:lsplit-edge? '(1 2) :xy (vec:vec 31d0 23d0)))
-        (% (weir:lsplit-edge? '(5 6) :xy (vec:vec 32d0 24d0))))
-      '(11 12 nil))
+    (weir:with (wer %)
+      (% (weir:split-edge? 1 2 :xy (vec:vec 30d0 20d0)) :a)
+      (% (weir:lsplit-edge? '(1 2) :xy (vec:vec 31d0 23d0)) :b)
+      (% (weir:lsplit-edge? '(5 6) :xy (vec:vec 32d0 24d0)) :c))
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             '((:a nil) (:b 12) (:c 11)))
 
-  (do-test (weir:get-num-edges wer) 14)
+  (do-test (weir:get-num-edges wer) 7)
 
   (do-test (weir:get-num-verts wer) 13)
 
@@ -369,7 +379,7 @@
         (% (weir:move-vert? v (vec:vec 2d0 2d0)))
         (% (weir:append-edge? v (vec:vec 3d0 2d0)))))
 
-    (do-test (weir:get-num-edges wer) 12)
+    (do-test (weir:get-num-edges wer) 6)
 
     (do-test (weir:get-num-verts wer) 12)
 
@@ -379,19 +389,16 @@
       (weir:itr-verts (wer v)
         (% (weir:move-vert? v (vec:vec 2d0 2d0)))))
 
-    (do-test
-      (sort (weir:itr-verts (wer i :collect t) i) #'<)
-      '(0 1 2 3 4 5 6 7 8 9 10 11))
+    (do-test (sort (weir:itr-verts (wer i :collect t) i) #'<)
+             '(0 1 2 3 4 5 6 7 8 9 10 11))
 
     (do-test (weir:itr-verts (wer i) i) nil)
 
-    (do-test
-      (sort (weir:itr-grp-verts (wer i :collect t) i) #'<)
-      '(0 1 2 3 5 6 7 11))
+    (do-test (sort (weir:itr-grp-verts (wer i :collect t) i) #'<)
+             '(0 1 2 3 5 6 7 11))
 
-    (do-test
-      (weir:itr-edges (wer e :collect t) e)
-      '((5 11) (5 6) (3 7) (0 1) (1 3) (1 2)))
+    (do-test (weir:itr-edges (wer e :collect t) e)
+             '((5 11) (5 6) (3 7) (0 1) (1 3) (1 2)))
 
     (do-test
       (sort (weir:itr-edges (wer e :collect t) (weir:ledge-length wer e)) #'<)
@@ -404,7 +411,7 @@
       (weir:with-rnd-edge (wer e)
         (% (weir:lsplit-edge? e :xy (vec:vec 31d0 23d0)))))
 
-    (do-test (weir:get-num-edges wer) 14)
+    (do-test (weir:get-num-edges wer) 7)
 
     (do-test (weir:get-num-verts wer) 13)))
 
@@ -424,55 +431,49 @@
                (weir:get-num-verts wer)
                100.0d0)
 
-    (weir:with (wer % :zwidth 50.0d0)
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:vec 500d0 500d0) 50.0d0) #'<)
-        #())
+    (weir:build-zonemap wer 50d0)
+    (do-test (sort (weir:verts-in-rad wer (vec:vec 500d0 500d0) 50.0d0) #'<)
+             #())
 
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:vec -500d0 500d0) 50.0d0) #'<)
-        #()))
+    (do-test (sort (weir:verts-in-rad wer (vec:vec -500d0 500d0) 50.0d0) #'<)
+             #())
 
-    (weir:with (wer % :zwidth 200.0d0)
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:vec 800d0 800d0) 200.0d0) #'<)
-        #(6 7))
+    (weir:build-zonemap wer 200d0)
+    (do-test
+      (sort (weir:verts-in-rad wer (vec:vec 800d0 800d0) 200.0d0) #'<)
+      #(6 7))
 
-      (do-test
-        (let ((a (list)))
-          (weir:with-verts-in-rad (wer (vec:rep 800d0) 200d0 v)
-            (setf a (append a (list v))))
-          a)
-        (list 6 7))
+    (do-test
+      (let ((a (list)))
+        (weir:with-verts-in-rad (wer (vec:rep 800d0) 200d0 v)
+          (setf a (append a (list v))))
+        a)
+      (list 6 7))
 
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:rep 500d0) 200.0d0) #'<)
-        #(3 4))
+    (do-test (sort (weir:verts-in-rad wer (vec:rep 500d0) 200.0d0) #'<)
+             #(3 4))
 
-      (do-test
-        (let ((a (list)))
-          (weir:with-verts-in-rad (wer (vec:rep 500d0) 200d0 v)
-            (setf a (append a (list v))))
-          a)
-        (list 3 4)))
+    (do-test
+      (let ((a (list)))
+        (weir:with-verts-in-rad (wer (vec:rep 500d0) 200d0 v)
+          (setf a (append a (list v))))
+        a)
+      (list 3 4))
 
-    (weir:with (wer % :zwidth 1000.0d0)
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:rep 500d0) 1000.0d0) #'<)
-        #(0 1 2 3 4 5 6 7))))
+    (weir:build-zonemap wer 1000.0d0)
+    (do-test (sort (weir:verts-in-rad wer (vec:rep 500d0) 1000.0d0) #'<)
+             #(0 1 2 3 4 5 6 7)))
 
   (let ((wer (weir:make)))
 
     (weir:add-verts! wer (rnd:nin-circ 330 400d0 :xy (vec:rep 0d0)))
 
-    (weir:with (wer % :zwidth 50d0)
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:vec 0d0 30d0) 20d0) #'<)
-        #(107 220))
+    (weir:build-zonemap wer 50d0)
+    (do-test (sort (weir:verts-in-rad wer (vec:vec 0d0 30d0) 20d0) #'<)
+             #(107 220))
 
-      (do-test
-        (sort (weir:verts-in-rad wer (vec:rep 0d0) 50d0) #'<)
-        #(60 62 107 183 220)))))
+    (do-test (sort (weir:verts-in-rad wer (vec:rep 0d0) 50d0) #'<)
+             #(60 62 107 183 220))))
 
 
 (defun test-weir-grp ()
@@ -503,7 +504,9 @@
       (do-test (sort (weir:itr-grp-verts (wer i :g nil :collect t) i) #'<)
                '(1 2))
 
-      (do-test (sort (alexandria:flatten (weir:itr-edges (wer e :g g1 :collect t) e)) #'<) '(1 2))
+      (do-test (sort (alexandria:flatten
+                       (weir:itr-edges (wer e :g g1 :collect t) e)) #'<)
+               '(1 2))
 
       (do-test (sort (weir:get-vert-inds wer :g g1) #'<) '(1 2))
 
@@ -547,7 +550,7 @@
 
     (weir:relative-neighborhood! wer 500d0)
 
-    (do-test (weir:get-num-edges wer) 210)
+    (do-test (weir:get-num-edges wer) 105)
 
     (weir:add-path! wer (vec:polygon 4 20d0))
 
@@ -592,3 +595,4 @@
   (test-title (test-weir-zonemap))
   (test-title (test-weir-grp))
   (test-title (test-weir-loop)))
+

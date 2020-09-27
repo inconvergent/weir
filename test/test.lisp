@@ -7,16 +7,14 @@
 (defvar *tests*)
 (defvar *fails*)
 (defvar *passes*)
-
-;TODO: there are still a lot of qirks here. the do test macro and global test
-;variables (above) are far from optmal. there is probably a better way to do
-;this via ASDF
-
-;TODO the tests that write an output file currently fail when running locally
-;(because the path is wrong) they work in the docker image, but the output file
-;is never checked (against the files in data)
+(defvar *catastrophic*)
 
 
+(defun sort-a-list (a)
+  (sort a #'string-lessp :key #'(lambda (x) (string (first x)))))
+
+
+; TODO: should probably find a framework for this ...
 ; TODO: approximately similar to
 
 ;https://www.rosettacode.org/wiki/Program_termination#Common_Lisp
@@ -46,10 +44,10 @@
       (if (equalp ,aname ,bname)
         (progn
           (incf *passes*)
-          (format t "~%~%~%~a ~%-----------------------------------------> pass" ',a))
+          (format t "~%~%~%~a ~%----------------------------------> pass" ',a))
         (progn
           (incf *fails*)
-          (format t "~%~%~%~a ~%#########################################> fail ~%--  wanted: ~% ~a ~%--  got: ~% ~a~%-----------------------------------------~%"
+          (format t "~%~%~%~a ~%#######################################################> fail ~%--  wanted: ~% ~a ~%--  got: ~% ~a~%-----------------------------------------~%"
             ',a ,bname ,aname))))))
 
 
@@ -57,7 +55,9 @@
   (format t "~% tests:  ~a~% fails:  ~a~% passes: ~a~%"
     *tests* *fails* *passes*)
   (when (> *fails* 0) (print "--- at least one test failed! ---")
-                      (terminate 1)))
+                      (terminate 1))
+  (when (> *catastrophic* 0) (print "--- at least one catastrophe! ---")
+                             (terminate 2)))
 
 
 ;;; test running for whole project
@@ -65,18 +65,20 @@
 (defvar *test-functions* nil)
 
 (defmacro define-file-tests (name () &body body)
-  `(progn
-     (defun ,name ()
-       (handler-case (progn ,@body)
-         (error (c)
-           (declare (ignore c))
-           (warn "! ! ! Errored when running file tests ~A.~%" ',name))))
-     (pushnew ',name *test-functions*)))
+  (alexandria:with-gensyms (cname)
+    `(progn
+      (defun ,name ()
+        (handler-case (progn ,@body)
+          (error (,cname)
+            (incf *catastrophic*)
+            (warn "! ! ! Error when running file tests ~A.~% ~A" ',name ,cname))))
+      (pushnew ',name *test-functions*))))
 
 (defun run-tests ()
   (setf *tests* 0)
   (setf *passes* 0)
   (setf *fails* 0)
+  (setf *catastrophic* 0)
   (dolist (test *test-functions*)
     (fresh-line)
     (format t "=============================================~%")

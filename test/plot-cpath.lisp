@@ -43,13 +43,10 @@
   (loop for b in v collect (vec:rot b a :xy xy)))
 
 
-(defun %main-plot-cpath (size fn)
-  (let ((left 200d0)
-        (right 800d0)
-        (bs 150d0)
-        (psvg (draw-svg:make* :stroke-width 1d0
+(defun %main-plot-cpath ()
+  (let ((psvg (draw-svg:make* :stroke-width 1d0
                               :rep-scale 0.5d0)))
-    (let (( res (make-adjustable-vector)))
+    (let ((res (make-adjustable-vector)))
 
       (loop for a in (math:linspace 15 0d0 (* 2d0 PI))
             and x in (math:linspace 15 60d0 940d0) do
@@ -122,8 +119,9 @@
                                         :lim 1d0))
                         :width 15d0 :closed c)))
 
-    (draw-svg:save psvg "data/plot-cpath")))
+    (draw-svg:save psvg (weir-utils:internal-path-string
+                          "test/data/plot-cpath"))))
 
 (define-file-tests test-plot-cpath ()
-  (time (%main-plot-cpath 1000 (second (cmd-args)))))
+  (time (%main-plot-cpath)))
 

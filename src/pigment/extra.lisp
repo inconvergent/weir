@@ -35,7 +35,8 @@
         (2 (values m (+ c m) (+ x m)))
         (3 (values m (+ x m) (+ c m)))
         (4 (values (+ x m) m (+ c m)))
-        (5 (values (+ c m) m (+ x m))))
+        (5 (values (+ c m) m (+ x m)))
+        (t (values 0d0 0d0 0d0)))
       (declare (double-float r g b))
       (make r g b a))))
 

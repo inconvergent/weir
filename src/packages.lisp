@@ -152,6 +152,7 @@
     #:flip
     #:from
     #:from!
+    #:hline
     #:idiv
     #:idiv!
     #:isub
@@ -213,6 +214,7 @@
     #:rect
     #:refract
     #:rep
+    #:rline
     #:rot
     #:sadd
     #:sadd!
@@ -234,8 +236,9 @@
     #:vec*
     #:vec-x
     #:vec-y
-    #:zero
-    #:with-xy)
+    #:vline
+    #:with-xy
+    #:zero)
   (:import-from #:weir-utils
     #:*opt-settings*
     #:vextend
@@ -829,6 +832,7 @@
     #:add-vert!
     #:add-vert?
     #:add-verts!
+    #:append-edge!
     #:append-edge?
     #:build-zonemap
     #:center!
@@ -838,9 +842,12 @@
     #:del-grp!
     #:edge-exists
     #:edge-length
+    #:exec-alt
     #:export-verts-grp
     #:get-all-grps
     #:get-all-verts
+    #:get-alteration-result-list
+    #:get-alteration-result-map
     #:get-continous-paths
     #:get-cycle-basis
     #:get-edges
@@ -880,6 +887,7 @@
     #:ldel-edge!
     #:ldel-edge?
     #:ledge-length
+    #:lexec-alt
     #:lsplit-edge!
     #:lsplit-edge-ind!
     #:lsplit-edge-ind?

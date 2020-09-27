@@ -97,7 +97,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun get-num-edges (grph)
   (declare #.*opt-settings* (graph grph))
-  (graph-num-edges grph))
+  (/ (graph-num-edges grph) 2))
 
 
 (defun get-num-verts (grph)

@@ -30,7 +30,7 @@
 
 (declaim (inline append-edge?))
 (defun append-edge? (v xy &key (rel t) g)
-  "add edge between vert v and new vert xy"
+  "add edge between vert v and new vert at xy"
   (declare (pos-int v) (vec:vec xy) (boolean rel))
   (lambda (wer)
     (-valid-vert ((weir-num-verts wer) v :err nil)

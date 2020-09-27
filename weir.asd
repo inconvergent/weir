@@ -57,12 +57,15 @@
                (:file "distance/zonemap")
                (:file "distance/kdtree")
                (:file "weir/weir")
+               (:file "weir/weir-macro")
+               (:file "weir/weir-with-macro")
                (:file "weir/vert-utils")
                (:file "weir/planar-cycles")
                (:file "weir/cycles")
                (:file "weir/3vert-utils")
                (:file "weir/alterations")
-               (:file "weir/3alterations")))
+               (:file "weir/3alterations")
+               (:file "weir/weir-extra")))
 
 (asdf:defsystem #:weir/tests
   :depends-on (#:weir)
@@ -90,7 +93,7 @@
                (:file "rnd")
                (:file "sandpaint")
                (:file "vec")
-               (:file "weir-loop")
                (:file "weir")
+               (:file "weir-loop")
                (:file "weir3")))
 

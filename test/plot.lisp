@@ -1,6 +1,6 @@
 (in-package #:weir-tests)
 
-(defun %main-plot (size fn)
+(defun %main-plot ()
   (let ((p (list (vec:vec 100d0 100d0) (vec:vec 200d0 100d0)
                  (vec:vec 200d0 200d0)))
         (psvg (draw-svg:make*)))
@@ -54,7 +54,8 @@
     ;                                                 (vec:vec 720d0 730d0)
     ;                                                 (vec:vec 730d0 710d0)))))
 
-    (draw-svg:save psvg "data/plot")))
+    (draw-svg:save psvg (weir-utils:internal-path-string
+                          "test/data/plot"))))
 
 (define-file-tests test-plot ()
-  (time (%main-plot 1000 (second (cmd-args)))))
+  (time (%main-plot)))

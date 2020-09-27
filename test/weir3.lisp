@@ -28,8 +28,8 @@
 
 (defun test-weir3-with ()
   (let ((wer (weir:make :dim 3)))
-    (weir:with (wer %)
 
+    (weir:with (wer %)
       (% (weir:3add-vert? (vec:3vec 11d0 3d0 9d0)))
       (list 4.5
             (% (weir:3move-vert? 0 (vec:3vec 1d0 0d0 9d0)))
@@ -49,8 +49,7 @@
         1 nil
         (% (weir:3add-vert? (vec:3vec 12d0 3d0 2d0)))
         (% (weir:3add-vert? (vec:3vec 13d0 6d0 3d0)))
-        (% (weir:3add-vert? (vec:3vec 13d0 3d0 3d0)))
-        (% nil))
+        (% (weir:3add-vert? (vec:3vec 13d0 3d0 3d0))))
 
       (weir:with (wer %)
         (% (weir:add-edge? 1 2))
@@ -75,12 +74,13 @@
     (weir:add-edge! wer 1 2)
     (weir:add-edge! wer 2 0)
 
-    (do-test
-      (weir:with (wer % :collect t)
-        (% (weir:3split-edge? 0 1 :xy (vec:3vec 30d0 20d0 3d0)))
-        (% (weir:3lsplit-edge? '(1 2) :xy (vec:3vec 31d0 23d0 4d0)))
-        (% (weir:3lsplit-edge? '(2 1) :xy (vec:3vec 32d0 24d0 5d0))))
-      '(3 nil 4))
+    (weir:with (wer %)
+      (% (weir:3split-edge? 0 1 :xy (vec:3vec 30d0 20d0 3d0)) :a)
+      (% (weir:3lsplit-edge? '(1 2) :xy (vec:3vec 31d0 23d0 4d0)) :b)
+      (% (weir:3lsplit-edge? '(2 1) :xy (vec:3vec 32d0 24d0 5d0)) :c))
+
+    (do-test (sort-a-list (weir:get-alteration-result-list wer))
+             '((:a 4) (:b nil) (:c 3)))
 
     (do-test (weir:3get-vert wer 3) (vec:3vec 32d0 24d0 5d0))))
 
@@ -104,3 +104,4 @@
   (test-title (test-weir3-with))
   (test-title (test-weir3-split))
   (test-title (test-weir3-kdtree)))
+

@@ -39,7 +39,8 @@
         0.22647985791951575d0 0.2203285988306688d0 0.22192693772741898d0
         1.0d0))
 
-    (sandpaint:save sand "data/sandpaint-rnd"))
+    (sandpaint:save sand (weir-utils:internal-path-string
+                           "test/data/sandpaint-rnd")))
 
   (let ((sand (sandpaint:make :size 100
                               :fg (pigment:black)
@@ -62,8 +63,10 @@
         0.911370618803475d0 0.0d0 0.0d0 0.0d0 0.0d0 0.271d0 0.0d0 0.0d0
         0.271d0))
 
-    (sandpaint:save sand "data/sandpaint-8")
-    (sandpaint:save sand "data/sandpaint-16" :bits 16))
+    (sandpaint:save sand (weir-utils:internal-path-string
+                           "test/data/sandpaint-8"))
+    (sandpaint:save sand (weir-utils:internal-path-string
+                           "test/data/sandpaint-16") :bits 16))
 
   (let ((sand (sandpaint:make :size 300
                               :fg (pigment:red 0.1d0)
@@ -73,7 +76,8 @@
     (sandpaint:pix sand (rnd:nin-circ 100000 50d0 :xy (vec:vec 150d0 150d0)))
     (sandpaint:pix sand (rnd:nin-circ 100000 50d0 :xy (vec:vec 300d0 150d0)))
 
-    (sandpaint:save sand "data/sandpaint-circ")))
+    (sandpaint:save sand (weir-utils:internal-path-string
+                           "test/data/sandpaint-circ"))))
 
 
 (define-file-tests test-sandpaint ()

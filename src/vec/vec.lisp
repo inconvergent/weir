@@ -32,6 +32,34 @@
                           (progn ,@body)))))))
 
 
+(declaim (inline hline))
+(defun hline (s &key (xy (zero)))
+  (declare #.*opt-settings* (double-float s) (vec xy))
+  "
+  horizontal line top to bottom, size 2*s around xy
+  "
+  (vec:ladd!* (list (vec:vec (- s) 0d0) (vec:vec s 0d0)) xy))
+
+(declaim (inline vline))
+(defun vline (s &key (xy (zero)))
+  (declare #.*opt-settings* (double-float s) (vec xy))
+  "
+  vertical line top to bottom, size 2*s around xy
+  "
+  (vec:ladd!* (list (vec:vec 0d0 (- s)) (vec:vec 0d0 s)) xy))
+
+(declaim (inline rline))
+(defun rline (s angle &key (xy (zero)) &aux (converse (+ angle PI)))
+  (declare #.*opt-settings* (double-float s angle converse) (vec xy))
+  "
+  line rotated at angle, size 2*s around xy
+  "
+  (vec:ladd!* (vec:lsmult!*
+                (list (vec:vec (cos angle) (sin angle))
+                      (vec:vec (cos converse) (sin converse))) s)
+              xy))
+
+
 (declaim (inline to-list))
 (defun to-list (v)
   (declare #.*opt-settings* (vec v))
@@ -288,6 +316,7 @@
 (declaim (inline on-line))
 (defun on-line (p a b)
   (declare #.*opt-settings* (double-float p) (vec a b))
+  "lerp between vecs, a, b"
   (vec (+ (vec-x a) (* p (- (vec-x b) (vec-x a))))
        (+ (vec-y a) (* p (- (vec-y b) (vec-y a))))))
 
@@ -295,12 +324,14 @@
 (declaim (inline lon-line))
 (defun lon-line (p ab)
   (declare #.*opt-settings* (double-float p) (list ab))
+  "lerp on line, ab"
   (apply #'on-line p ab))
 
 
 (declaim (inline lon-line*))
 (defun lon-line* (pp ab)
   (declare #.*opt-settings* (sequence pp) (list ab))
+  "lerp multiple on line, ab"
   (if (equal (type-of pp) 'cons)
       (loop for p of-type double-float in pp collect (lon-line p ab))
       (loop for p of-type double-float across pp collect (lon-line p ab))))

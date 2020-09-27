@@ -1,8 +1,7 @@
 (in-package #:weir-tests)
 
 (defun %main-pix-overlap (size)
-  (let ((wer (weir:make))
-        (sand (sandpaint:make :size size
+  (let ((sand (sandpaint:make :size size
                               :fg (pigment:white 1d0)
                               :bg (pigment:gray 0.1d0))))
 
@@ -40,7 +39,8 @@
           do (sandpaint:set-fg sand (pigment:rgb (rnd:rnd) (rnd:rnd) (rnd:rnd)))
              (sandpaint:pix-overlap* sand v))
 
-    (sandpaint:save sand "data/pix-overlap")))
+    (sandpaint:save sand (weir-utils:internal-path-string
+                           "test/data/pix-overlap"))))
 
 
 (define-file-tests test-pix-overlap ()
