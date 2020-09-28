@@ -1,4 +1,4 @@
-#!/usr/bin/sbcl --script
+#!/usr/local/bin/sbcl --script
 
 ; set your path to sbcl above. i would use env, but it does not appear to work
 ; with the --script argument. alternately, delete the shebang and the load

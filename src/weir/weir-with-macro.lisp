@@ -44,16 +44,18 @@
                                 &aux (expr (first root)) (root* (cdr root)))
   (declare (symbol accfx alt-res) (list root* expr))
   ;(when (not root*) (error "argument to accfx can not be nil"))
-  (when (not (< -1 (length root*) 3))
+  (when (not (< -1 (length root*) 4))
         (error "incorrect arguments to accumulator, got: ~a" root*))
-  (multiple-value-bind (name ref)
+  (multiple-value-bind (name ref loop*)
     (loop with ref = nil
           with name = nil
+          with loop* = nil
           for v in root*
-          do (if (keywordp v) (setf name v))
-             (if (consp v) (setf ref v))
-          finally (return (values name ref)))
-    `(,accfx (weir::future ,alt-res ,expr ,name ,ref))))
+          do (when (equal v :loop) (setf loop* t))
+             (when (keywordp v) (setf name v))
+             (when (consp v) (setf ref v))
+          finally (return (values name ref loop*)))
+    `(,accfx (weir::future ,alt-res ,expr ,name ,ref ,loop*))))
 
 ; macro helper
 (defun _transform-body (root accfx alt-res)
@@ -91,15 +93,16 @@
           (t (error "unexpected error in _any-futures, got ~a" root)))))
 
 ; macro helper
-(defun _find-non-atom-args (expr ref &aux (gs->arg (list)))
+(defun _find-non-atom-args (expr ref loop* &aux (gs->arg (list)))
   (labels ((-e-or-gensym (e)
-            (if (and (not (atom e))
+            (if (and (or (not (atom e)) (and (atom e) loop*))
                      (not (_any-futures e ref)))
                 (let ((gs (gensym "non-atom-arg")))
                   (push (list gs e) gs->arg)
                   gs)
                 e)))
-    (values (loop for e in expr collect (-e-or-gensym e))
+    (values (cons (first expr) (loop for e in (cdr expr)
+                                     collect (-e-or-gensym e)))
             gs->arg)))
 
 ; macro helper
@@ -108,7 +111,7 @@
   (if (> (length gs->arg) 0) `(let ,(reverse gs->arg) ,l)
                              l))
 
-(defmacro future (alt-res expr name ref)
+(defmacro future (alt-res expr name ref loop*)
   (declare (symbol alt-res) (list expr))
 
   (when (not (every (lambda (r) (keywordp r)) ref))
@@ -117,7 +120,7 @@
         (error "name must be keyword or nil, got: ~a" name))
 
   (alexandria:with-gensyms (wname)
-    (multiple-value-bind (expr-atom gs->arg) (_find-non-atom-args expr ref)
+    (multiple-value-bind (expr-atom gs->arg) (_find-non-atom-args expr ref loop*)
       (if ref ; expr depends on future result
           (_let-over-lambda gs->arg
             `(lambda (,wname)
