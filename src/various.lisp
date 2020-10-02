@@ -17,6 +17,21 @@
       #+CMU extensions:*command-line-words*
       nil))
 
+
+;https://www.rosettacode.org/wiki/Program_termination#Common_Lisp
+(defun terminate (status)
+  (format t "~%terminated with status: ~a~%" status)
+  #+sbcl (sb-ext:quit :unix-status status)
+  #+ccl (ccl:quitstatus)
+  #+clisp (ext:quitstatus)
+  #+cmu (unix:unix-exit status)
+  #+ecl (ext:quitstatus)
+  #+abcl (ext:quit:status status)
+  #+allegro (excl:exitstatus :quiet t)
+  #+gcl (common-lisp-user::bye status)
+  #+ecl (ext:quitstatus))
+
+
 ;https://github.com/inconvergent/weir/pull/1/commits/4a1df51914800c78cb34e8194222185ebde12388
 (defmacro define-struct-load-form (struct-name)
   "Allow the structure named STRUCT-NAME to be dumped to FASL files."

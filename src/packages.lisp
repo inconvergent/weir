@@ -13,6 +13,7 @@
    #:define-struct-load-form
    #:ensure-filename
    #:ensure-vector
+   #:terminate
    #:internal-path-string
    #:lvextend
    #:mac

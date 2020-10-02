@@ -1,16 +1,30 @@
 
 (in-package :weir)
 
+(defvar *errormsg* "
+
+--------------------------------------------------------------------------------
+  alteration error on:
+
+  ~a
+
+  message:
+
+  ~a
+--------------------------------------------------------------------------------
+
+")
+
 
 (defun get-alteration-result-list (wer &key (all t))
-  (declare (weir wer) (boolean all))
+  (declare #.*opt-settings* (weir wer) (boolean all))
   (loop for k being the hash-keys of (weir-alt-res wer)
           using (hash-value v)
         if (or all (and (not all) v))
         collect (list k v)))
 
 (defun get-alteration-result-map (wer)
-  (declare (weir wer))
+  (declare #.*opt-settings* (weir wer))
   (weir-alt-res wer))
 
 
@@ -33,7 +47,10 @@
   (declare #.*opt-settings* (list fxs) (weir wer))
   (labels ((-is-resolved (fx)
             (declare (function fx))
-            (multiple-value-bind (is-resolved _) (funcall fx wer)
+            (multiple-value-bind (is-resolved _)
+              (handler-case (funcall fx wer)
+                 (error (ename) (format t *errormsg* fx ename)
+                                (weir-utils::terminate 666)))
               (declare (ignore _) (boolean is-resolved))
               is-resolved)))
     (loop while fxs do (setf fxs (remove-if #'-is-resolved fxs)))))
