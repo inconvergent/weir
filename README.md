@@ -226,8 +226,44 @@ Here is and example of manipulating a `weir` instance called `wer` using
               ; add edge
               (% (weir:add-edge? v w)))))))
 ```
-You can define your own arbitrary alterations (functions). There is an example
-of this in `examples/custom-alt.lisp`.
+
+It is possible to reference alterations inside a `(weir:with ...)` context. A
+simple example looks like this:
+
+```lisp
+(weir:with (wer %)
+  ; add vert, named :a
+  (% (weir:add-vert? pt) :a)
+  ; add vert, named :b
+  (% (weir:add-vert? pt) :b)
+  ; use :a and :b to add new edge, if both are added
+  (% (weir:add-edge? :a :b) (:a :b)))
+```
+
+You can also define your own arbitrary alterations. There is an example of
+custom alterations and references in `examples/custom-alt.lisp`.
+
+Note that all alterations must follow a specific format. That is, there can be
+at most three forms inside `(% ...)`. The first must be a form that evaluates
+to a lambda. The third and second are both optional, and the order does not
+matter, however, they must be a a `:keyword` if you want to give the alteration
+result a name, and a list of keywords to indicate that you are referencing
+alteration results inside the first form.
+
+Furthermore, placing an alteration inside a loop (of any kind) can result in
+unexpected behaviour. Most notable you shouldn't reference the result of an
+alteration in a loop from another alteration. And you should use the `:loop`
+keyword to indicate that all variables inside the alteration should be shadowed
+"inside" the alteration. Here is an example:
+
+```lisp
+(weir:with (wer %)
+  (loop for i from 0 below 10
+        do (% (weir:add-vert? i) :loop)))
+```
+
+This might be improved in the future, but I'm not sure what kind of behaviour I
+really want yet.
 
 
 ## Use
@@ -254,6 +290,10 @@ I have written about things related to this code (when it was called `snek`) at:
   - https://inconvergent.net/2017/arbitrary-alterations/
   - https://inconvergent.net/2017/grains-of-sand/
   - https://inconvergent.net/2017/a-propensity-for-mistakes/
+
+And recently at:
+
+  - https://inconvergent.net/2020/future-alterations/
 
 
 ## On Use and Contributions
@@ -319,7 +359,6 @@ Summary:
 ```
 
 
-
 ## Thanks
 
 I would like to thank:
@@ -328,6 +367,7 @@ I would like to thank:
   - https://twitter.com/jackrusher
   - https://twitter.com/paulg
   - https://twitter.com/porglezomp
+  - https://twitter.com/stylewarning
 
 Who have provided me with useful hints and code feedback.
 
