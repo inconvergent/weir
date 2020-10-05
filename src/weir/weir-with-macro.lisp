@@ -60,39 +60,6 @@
               is-resolved)))
     (loop while fxs do (setf fxs (remove-if #'-is-resolved fxs)))))
 
-(defun _get-name-ref (root)
-  "extract name, refs and :loop of an alteration as it is collected."
-  (loop with ref = nil
-        with name = nil
-        with lp = nil
-        for v in root
-        do (when (equal v :loop) (setf lp t))
-           (when (keywordp v) (setf name v))
-           (when (consp v) (setf ref v))
-        finally (return (values name ref lp))))
-
-(defun _do-transform-to-future (root accfx alt-res &aux (expr (first root))
-                                                        (root* (cdr root)))
-  (declare (symbol accfx alt-res) (list root* expr))
-  "wrap alteration in closure, so it can be used as a future."
-  (unless (< -1 (length root*) 4)
-          (error "incorrect alteration, got: ~a" root*))
-  (multiple-value-bind (name ref lp) (_get-name-ref root*)
-    `(,accfx (weir::future ,alt-res ,expr ,name ,ref ,lp))))
-
-; macro helper
-(defun _transform-body (root accfx alt-res)
-  (declare (symbol accfx alt-res))
-  "find all alterations to be collected, and transform them to futures."
-  (cond ((atom root) root)
-        ((listp root)
-           (if (equal (first root) accfx)
-               ; transform body
-               (_do-transform-to-future (cdr root) accfx alt-res)
-               ; else recurse
-               (cons (_transform-body (car root) accfx alt-res)
-                     (_transform-body (cdr root) accfx alt-res))))))
-
 (defun _find-non-atom-args (expr ref lp &aux (gs->arg (list)))
   "
   find all non-atom forms in expr, and replace them with (gensym). these forms
@@ -180,8 +147,8 @@
               `(lambda (,wname)
                  (values t ,(-call-fx wname expr-atom)))))))))
 
-(defmacro with ((wer accfx) &body body)
-  (declare (symbol wer accfx))
+(defmacro with ((wer accfx &key db) &body body)
+  (declare (symbol wer accfx) (boolean db))
   "
   creates a context for manipulating weir via alterations.
   example:
@@ -221,19 +188,57 @@
   alteration result a name, and a list of keywords to indicate that you are
   referencing alteration results inside the first form.
   "
-  (alexandria:with-gensyms (wname x alts alt-res clear-alt-res)
-    (let ((new-body (_transform-body body accfx alt-res)))
-     `(let* ((,wname ,wer)
-             (,alts (list))
-             (,alt-res (weir-alt-res ,wname)))
-        (declare (weir ,wer) (hash-table ,alt-res) (list ,alts))
+  (labels
+    ((-get-name-ref (root)
+       "extract name, refs and :loop of an alteration as it is collected."
+       (loop with ref = nil
+             with name = nil
+             with lp = nil
+             for v in root
+             do (when (equal v :loop) (setf lp t))
+                (when (keywordp v) (setf name v))
+                (when (consp v) (setf ref v))
+             finally (return (values name ref lp))))
 
-      (incf (weir-wc ,wname))
+     (-do-transform-to-future (root alt-res &aux (expr (first root))
+                                                 (root* (cdr root)))
+       (declare (symbol alt-res) (list root* expr))
+       "wrap alteration in closure, so it can be used as a future."
+       (unless (< -1 (length root*) 4)
+               (error "incorrect alteration, got: ~a" root*))
+       (multiple-value-bind (name ref lp) (-get-name-ref root*)
+         `(progn
+            ; print macro expansion for debug
+            ,(when db `(,accfx (weir-utils:mac
+                             (weir::future ,alt-res ,expr ,name ,ref ,lp))))
 
-      (labels ((,accfx (,x) (typecase ,x (function (push ,x ,alts))))
-               (,clear-alt-res () (loop for ,x being the hash-keys of ,alt-res
-                                        do (remhash ,x ,alt-res))))
-        (,clear-alt-res)
-        (progn ,@new-body)
-        (-resolve-all ,alts ,wname))))))
+            (,accfx (weir::future ,alt-res ,expr ,name ,ref ,lp)))))
+
+     (-transform-body (root alt-res)
+       (declare (symbol alt-res))
+       "find all alterations to be collected, and transform them to futures."
+       (cond ((atom root) root)
+             ((listp root)
+                (if (equal (first root) accfx)
+                    ; transform body
+                    (-do-transform-to-future (cdr root) alt-res)
+                    ; else recurse
+                    (cons (-transform-body (car root) alt-res)
+                          (-transform-body (cdr root) alt-res)))))))
+
+    (alexandria:with-gensyms (wname x alts alt-res clear-alt-res)
+      (let ((new-body (-transform-body body alt-res)))
+        `(let* ((,wname ,wer)
+                (,alts (list))
+                (,alt-res (weir-alt-res ,wname)))
+           (declare (weir ,wer) (hash-table ,alt-res) (list ,alts))
+
+         (incf (weir-wc ,wname))
+
+         (labels ((,accfx (,x) (typecase ,x (function (push ,x ,alts))))
+                  (,clear-alt-res () (loop for ,x being the hash-keys of ,alt-res
+                                           do (remhash ,x ,alt-res))))
+           (,clear-alt-res)
+           (progn ,@new-body)
+           (-resolve-all ,alts ,wname)))))))
 

@@ -23,7 +23,7 @@
         repeat 100
         do (weir:build-zonemap wer rad)
            (weir:with (wer %)
-             (% (lambda (_) (print :e)) (:e))
+             (% (lambda () (print :e)) (:e))
              ; the result of this alteration will be available
              ; inside this context as :v
              (% (vert-if-no-collision? curr rad
