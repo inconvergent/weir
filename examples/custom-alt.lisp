@@ -22,7 +22,7 @@
                       (rnd:in-circ 200d0 :xy (vec:rep 500d0)))
         repeat 100
         do (weir:build-zonemap wer rad)
-           (weir:with (wer %)
+           (weir:with (wer % :db t)
              (% (lambda () (print :e)) (:e))
              ; the result of this alteration will be available
              ; inside this context as :v

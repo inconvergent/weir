@@ -243,27 +243,68 @@ simple example looks like this:
 You can also define your own arbitrary alterations. There is an example of
 custom alterations and references in `examples/custom-alt.lisp`.
 
-Note that all alterations must follow a specific format. That is, there can be
-at most three forms inside `(% ...)`. The first must be a form that evaluates
-to a lambda. The third and second are both optional, and the order does not
-matter, however, they must be a a `:keyword` if you want to give the alteration
-result a name, and a list of keywords to indicate that you are referencing
-alteration results inside the first form.
+All alterations must follow a specific format. There can be at most
+three forms inside `(% ...)`. The first must be a form that evaluates to a
+lambda (or a lambda, this is experimental). This function should accept a
+single argument. When the alteration is applied it is called with the current
+`weir` instance as the only argument.
 
-Furthermore, placing an alteration inside a loop (of any kind) can result in
-unexpected behaviour. Most notable you shouldn't reference the result of an
-alteration in a loop from another alteration. And you should use the `:loop`
-keyword to indicate that all variables inside the alteration should be shadowed
-"inside" the alteration. Here is an example:
+The second and third arguments are both optional, and the order does not
+matter. Use a `:keyword` if you want to give the alteration result a name; and
+a list of keywords, to indicate that you are using references to other named
+alteration results in this alteration.
+
+
+### Shadowing
+
+All arguments to an alteration that are atoms, or forms that do not contain a
+reference to another alteration result, will be shadowed before the alteration
+is collected. This is the behaviour you will usually want in an example such as
+the one above. However, it might cause unexpected issues if you write something
+like.
 
 ```lisp
-(weir:with (wer %)
-  (loop for i from 0 below 10
-        do (% (weir:add-vert? i) :loop)))
+
+(% (some-alteration? local-var (first local-var-1) :a
+                     (list :b (first local-var-2))) (:a :b))
 ```
 
-This might be improved in the future, but I'm not sure what kind of behaviour I
-really want yet.
+The variables/forms that will be shadowed here are: `local-var`, `(first
+local-var-1)`. Crucially, `(list :b (first local-var-2))` will not be shadowed,
+because it contains a reference to `:b`.
+
+You can use `(weir:with ... :bd t)` to see how an alteration is expanded. This
+might make it easier to find issues with shadowed/non-shadowed variables.
+
+At any rate, you can usually bypass these problems using `(labels ())` locally
+to create a custom alteration. The above example might be written as follows to
+get more predictable behaviour:
+
+```lisp
+(labels ((some-alteration*? (a b)
+           (lambda (w)
+           ; alt body
+           ; use local-vars directly here if they shouldn't be shadowed.
+           )))
+  (weir:with (wer %)
+    ; then pass in the local vars or forms that should be shadowed
+    (% (some-alteration*? :a :b (first local-1) (first local-2)))))
+```
+In the above alteration, both `(first local-1)` and `(first local-2)`
+will be shadowed.
+
+Furthermore, placing an alteration inside a loop (of any kind) can result in
+unexpected behaviour. Most notably you shouldn't reference the result of an
+alteration in a loop from another alteration: It does not stack up all results,
+and it will not wait until the loop is finished to resolve any dependent
+alterations.
+
+*NOTE: Before it was possible to reference other alteration results, `(% ...)`
+was a function. This eradicated the need for (most of) these complex shadowing
+rules. I might try to change the behaviour once I have a better understanding
+of what behaviour I actually find convenient. However, I'm not currently sure
+how avoid these rules when some arguments do not exist at the time the
+alteration is collected.*
 
 
 ## Use

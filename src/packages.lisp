@@ -466,6 +466,7 @@
     #:lset
     #:make
     #:sget
+    #:to-list
     #:with)
   (:import-from #:weir-utils))
 

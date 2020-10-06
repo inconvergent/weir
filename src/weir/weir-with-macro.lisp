@@ -60,7 +60,7 @@
               is-resolved)))
     (loop while fxs do (setf fxs (remove-if #'-is-resolved fxs)))))
 
-(defun _find-non-atom-args (expr ref lp &aux (gs->arg (list)))
+(defun _args->gensyms (expr ref &aux (gs->arg (list)))
   "
   find all non-atom forms in expr, and replace them with (gensym). these forms
   will be wrapped around expr in a closure.
@@ -72,8 +72,10 @@
   left as is.
   "
   (labels ((-is-lambda () (equal (first expr) 'lambda))
+           (-gs-name (e) (if (atom e) (concatenate 'string (string e) ":")
+                                      "non-atom:"))
            (-replace-with-gensym (e)
-             (let ((gs (gensym "non-atom-arg")))
+             (let ((gs (gensym (-gs-name e))))
                (push (list gs e) gs->arg)
                gs))
            (-match-some-refs (e ref*)
@@ -85,25 +87,24 @@
                    ((consp root*) (or (-any-futures (car root*) ref*)
                                       (-any-futures (cdr root*) ref*)))))
            (-e-or-gensym (e ref*)
-             (if (and (or (not (atom e)) (and (atom e) lp))
-                      (not (-any-futures e ref*)))
-                 (-replace-with-gensym e)
-                 e))
-           (-args-or-_ (a)
-             "replace empty lambda args with ((gensym _))"
+             (if (not (-any-futures e ref*)) (-replace-with-gensym e) e))
+           (-args-or-rest (a)
+             "replace empty lambda args with (&rest (gensym))"
              (if (not (second a)) `(lambda (&rest ,(gensym "rest"))) a))
            (-process (expr* ref*)
              (loop for e in expr* collect (-e-or-gensym e ref*))))
 
     (values (if (-is-lambda)
-                (append (-args-or-_ (subseq expr 0 2))
-                        (-process (cddr expr) (append ref (second expr))))
+                (append (-args-or-rest (subseq expr 0 2))
+                        (list (cons (caaddr expr) ; first function in lambda
+                                    (-process (cdaddr expr) ; everything after
+                                              (append ref (second expr))))))
                 (cons (first expr) (-process (cdr expr) ref)))
             gs->arg)))
 
 
-(defmacro future (alt-res expr name ref lp)
-  (declare (symbol alt-res) (list expr) (boolean lp))
+(defmacro future (alt-res expr name ref)
+  (declare (symbol alt-res) (list expr))
   "convert to future if alteration has references to other alterations in the
    same block."
 
@@ -127,25 +128,25 @@
        expr*)
      (-let-over-lambda (gs->arg lambda*)
        (declare (list gs->arg lambda*))
-       "wrap lambda in let closure to ensure non-atom expressions are evaluated
-        before the alteration is collected."
+       "wrap function in closure to ensure expressions are evaluated before the
+        alteration is collected."
        (if (> (length gs->arg) 0) `(let ,(reverse gs->arg) ,lambda*)
                                    lambda*)))
 
     (alexandria:with-gensyms (wname)
-      (multiple-value-bind (expr-atom gs->arg) (_find-non-atom-args expr ref lp)
+      (multiple-value-bind (expr-gs gs->arg) (_args->gensyms expr ref)
         (if ref ; expr depends on future result
             (-let-over-lambda gs->arg
               `(lambda (,wname)
                  (case (-if-all-resolved ,alt-res ',ref)
                        (:ok (values t ,(-call-fx wname
-                                         (-subst-all-refs expr-atom ref alt-res))))
+                                         (-subst-all-refs expr-gs ref alt-res))))
                        (:bail (values t ,(-set-bail)))
                        (:wait (values nil nil)))))
             ; expr has no future dependencies
             (-let-over-lambda gs->arg
               `(lambda (,wname)
-                 (values t ,(-call-fx wname expr-atom)))))))))
+                 (values t ,(-call-fx wname expr-gs)))))))))
 
 (defmacro with ((wer accfx &key db) &body body)
   (declare (symbol wer accfx) (boolean db))
@@ -181,38 +182,32 @@
   note that using the same name for multiple alterations might result in
   unexpected behaviour.
 
-  Note that all alterations must follow a specific format. That is, there can
-  be at most three forms inside `(% ...). The first must be a form that
-  evaluates to a lambda. The third and second are both optional, and the order
-  does not matter, however, they must be a :keyword if you want to give the
-  alteration result a name, and a list of keywords to indicate that you are
-  referencing alteration results inside the first form.
+  see README for further details. particularly on behaviour when shadowing
+  variables in alterations.
   "
   (labels
     ((-get-name-ref (root)
-       "extract name, refs and :loop of an alteration as it is collected."
+       "extract name and refs of an alteration as it is collected."
        (loop with ref = nil
              with name = nil
-             with lp = nil
              for v in root
-             do (when (equal v :loop) (setf lp t))
-                (when (keywordp v) (setf name v))
+             do (when (keywordp v) (setf name v))
                 (when (consp v) (setf ref v))
-             finally (return (values name ref lp))))
+             finally (return (values name ref))))
 
      (-do-transform-to-future (root alt-res &aux (expr (first root))
                                                  (root* (cdr root)))
        (declare (symbol alt-res) (list root* expr))
        "wrap alteration in closure, so it can be used as a future."
-       (unless (< -1 (length root*) 4)
+       (unless (<= 0 (length root*) 3)
                (error "incorrect alteration, got: ~a" root*))
-       (multiple-value-bind (name ref lp) (-get-name-ref root*)
+       (multiple-value-bind (name ref) (-get-name-ref root*)
          `(progn
             ; print macro expansion for debug
-            ,(when db `(,accfx (weir-utils:mac
-                             (weir::future ,alt-res ,expr ,name ,ref ,lp))))
-
-            (,accfx (weir::future ,alt-res ,expr ,name ,ref ,lp)))))
+            ,(when db `(progn (format t "~%~%-------~%")
+                              (weir-utils:mac (weir::future ,alt-res ,expr
+                                                            ,name ,ref))))
+            (,accfx (weir::future ,alt-res ,expr ,name ,ref)))))
 
      (-transform-body (root alt-res)
        (declare (symbol alt-res))

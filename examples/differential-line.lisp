@@ -25,14 +25,13 @@
 
 
 (defun do-step (wer &key attract reject near-limit split-limit rad)
-  (progn (weir:with (wer %)
+  (progn (weir:with (wer % :db nil)
     ; attract
     (weir:itr-edge-verts* (wer e v)
       (let ((f (apply #'vec:isub v)))
         (loop for i in e and s in signs
               if (> (vec:len f) near-limit)
-              do (% (weir:move-vert? i (attract f s attract))
-                    :loop))))
+              do (% (weir:move-vert? i (attract f s attract))))))
     ; reject
     (weir:itr-verts (wer v)
       (loop with near = (weir:verts-in-rad wer (weir:get-vert wer v) rad)
@@ -40,13 +39,11 @@
             if (not (= w v))
             do (% (weir:move-vert? v
                     (reject rad reject
-                      (apply #'vec:sub (weir:get-verts wer (list v w)))))
-                  :loop)))
+                      (apply #'vec:sub (weir:get-verts wer (list v w))))))))
     ; split
     (weir:itr-edge-verts* (wer e v)
       (when (> (apply #'vec:dst v) split-limit)
-            (% (weir:lsplit-edge? e :xy (vec:lmid v))
-               :loop))))))
+            (% (weir:lsplit-edge? e :xy (vec:lmid v))))))))
 
 
 (defun draw (wer fn &optional i)

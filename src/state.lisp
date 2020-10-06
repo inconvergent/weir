@@ -42,3 +42,8 @@
   (declare (state st) (list keys))
   (loop for k in keys do (setf (sget st k) v)))
 
+(defun to-list (st)
+  (declare (state st))
+  (loop for k being the hash-keys of (state-s st) using (hash-value v)
+        collect (list k v)))
+
