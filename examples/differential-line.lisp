@@ -25,7 +25,7 @@
 
 
 (defun do-step (wer &key attract reject near-limit split-limit rad)
-  (progn (weir:with (wer % :db nil)
+  (weir:with (wer %)
     ; attract
     (weir:itr-edge-verts* (wer e v)
       (let ((f (apply #'vec:isub v)))
@@ -43,7 +43,7 @@
     ; split
     (weir:itr-edge-verts* (wer e v)
       (when (> (apply #'vec:dst v) split-limit)
-            (% (weir:lsplit-edge? e :xy (vec:lmid v))))))))
+            (% (weir:lsplit-edge? e :xy (vec:lmid v)))))))
 
 
 (defun draw (wer fn &optional i)

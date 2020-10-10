@@ -15,6 +15,16 @@
 
 ")
 
+(defvar *with-errormsg* "
+
+--------------------------------------------------------------------------------
+  weir:with ~a error, message:
+
+  ~a
+--------------------------------------------------------------------------------
+
+")
+
 
 (defun get-alteration-result-list (wer &key (all t))
   (declare #.*opt-settings* (weir wer) (boolean all))
@@ -60,47 +70,77 @@
               is-resolved)))
     (loop while fxs do (setf fxs (remove-if #'-is-resolved fxs)))))
 
-(defun _args->gensyms (expr ref &aux (gs->arg (list)))
+; TODO: this is rather complicated and messy. revisit this to see if it can be
+; improved
+(defun _args->gensyms (root ref)
   "
-  find all non-atom forms in expr, and replace them with (gensym). these forms
-  will be wrapped around expr in a closure.
+  find forms in expr that can be shadowed, and replace them with (gensym).
+  these forms will be wrapped around expr/root in a closure.
 
-  if expr is a lambda, the same process will be applied to the body of the
+  if expr/root is a lambda, the same process will be applied to the body of the
   lambda.
 
-  any form that contains a reference (or an argument to the lambda) will be
+  any function call that contains a ref will be left as is.
+
+  any symbol that is a ref (:keyword), or an argument to the lambda, will be
   left as is.
   "
-  (labels ((-is-lambda () (equal (first expr) 'lambda))
-           (-gs-name (e) (if (atom e) (concatenate 'string (string e) ":")
-                                      "non-atom:"))
-           (-replace-with-gensym (e)
-             (let ((gs (gensym (-gs-name e))))
-               (push (list gs e) gs->arg)
-               gs))
-           (-match-some-refs (e ref*)
-             "t if e matches any ref."
-             (some (lambda (r) (equal r e)) ref*))
-           (-any-futures (root* ref*)
-             "t if root contains any refs"
-             (cond ((atom root*) (-match-some-refs root* ref*))
-                   ((consp root*) (or (-any-futures (car root*) ref*)
-                                      (-any-futures (cdr root*) ref*)))))
-           (-e-or-gensym (e ref*)
-             (if (not (-any-futures e ref*)) (-replace-with-gensym e) e))
-           (-args-or-rest (a)
-             "replace empty lambda args with (&rest (gensym))"
-             (if (not (second a)) `(lambda (&rest ,(gensym "rest"))) a))
-           (-process (expr* ref*)
-             (loop for e in expr* collect (-e-or-gensym e ref*))))
+  (let ((gslst (list)))
+    (labels
+      ((-gs-with-name (r)
+         "make gensym from r"
+         (gensym (if (atom r) (concatenate 'string (string r) ":")
+                              "non-atom:")))
+       (-replace-with-gs (r)
+         "replace symbol with gensym"
+         (let ((g (-gs-with-name r)))
+           (push (list g r) gslst)
+           g))
+       (-match-refp (r ref*)
+         "t if r matches any symbol in ref"
+         (list :ref ref* r (some (lambda (x) (eql x r)) ref*))
+         (some (lambda (x) (equal x r)) ref*))
+       (-any-futures (root* ref*)
+         "t if root contains any refs"
+         (cond ((atom root*) (-match-refp root* ref*))
+               ((consp root*) (or (-any-futures (car root*) ref*)
+                                  (-any-futures (cdr root*) ref*)))))
+       (-setfp (r)
+         "t if r is a (setf ...)"
+         (and (listp r) (equal (car r) 'setf)))
+       (-lambdap (r)
+         "t if r is a (lambda () ...)"
+         (and (listp r) (equal (car r) 'lambda)))
+       (-sharp-quotep (x)
+         "t if r is a #'symbol"
+         (and (consp x) (equal 'function (first x)) (= 2 (length x))))
+       (-do-walk-fx-test (r ref*)
+         "check if first in r is a (fx ...)"
+         (cond ((and (consp r) (not (-any-futures r ref*))) (-replace-with-gs r))
+               ((consp r) (-do-walk r ref* :fx t))
+               (t (-do-walk r ref* :fx nil))))
+       (-args-or-rest (expr*)
+         "append rest to lambda arg if empty"
+         (if (not (second expr*)) `(lambda (&rest ,(gensym "rest-"))
+                                     ,(third expr*))
+                                  expr*))
+       (-do-walk (r ref* &key fx)
+         (cond ((not r) nil)
+               ((or (numberp r) (-sharp-quotep r) (keywordp r)) r)
+               ((-lambdap r) (append (subseq r 0 2)
+                                     (-do-walk (cddr r) (append ref* (second r)))))
+               ((-setfp r) (append (subseq r 0 2)
+                                   (-do-walk (cddr r) ref*)))
+               ((atom r) (if (not (-any-futures r ref*)) (-replace-with-gs r) r))
+               (fx (append (cons (first r) (list (-do-walk-fx-test (second r) ref*)))
+                           (-do-walk (cddr r) ref*)))
+               ((consp r) (cons (-do-walk-fx-test (car r) ref*)
+                                (-do-walk (cdr r) ref*))))))
+      (values (if (-lambdap root)
+                  (-args-or-rest (-do-walk root ref))
+                  (cons (first root) (-do-walk (cdr root) ref)))
+              gslst))))
 
-    (values (if (-is-lambda)
-                (append (-args-or-rest (subseq expr 0 2))
-                        (list (cons (caaddr expr) ; first function in lambda
-                                    (-process (cdaddr expr) ; everything after
-                                              (append ref (second expr))))))
-                (cons (first expr) (-process (cdr expr) ref)))
-            gs->arg)))
 
 
 (defmacro future (alt-res expr name ref)
@@ -222,7 +262,9 @@
                           (-transform-body (cdr root) alt-res)))))))
 
     (alexandria:with-gensyms (wname x alts alt-res clear-alt-res)
-      (let ((new-body (-transform-body body alt-res)))
+      (let ((new-body (handler-case (-transform-body body alt-res)
+                                    (error (ename)
+                                      (format t *with-errormsg* "transform" ename)))))
         `(let* ((,wname ,wer)
                 (,alts (list))
                 (,alt-res (weir-alt-res ,wname)))
@@ -234,6 +276,11 @@
                   (,clear-alt-res () (loop for ,x being the hash-keys of ,alt-res
                                            do (remhash ,x ,alt-res))))
            (,clear-alt-res)
-           (progn ,@new-body)
+
+           (handler-case
+             (progn ,@new-body)
+             (error (ename) (format t *with-errormsg* "macro" ename)
+                            (weir-utils::terminate 667)))
+
            (-resolve-all ,alts ,wname)))))))
 

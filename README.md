@@ -270,28 +270,12 @@ like.
 ```
 
 The variables/forms that will be shadowed here are: `local-var`, `(first
-local-var-1)`. Crucially, `(list :b (first local-var-2))` will not be shadowed,
-because it contains a reference to `:b`.
+local-var-1)`, and `(first local-var-2)`.
 
 You can use `(weir:with ... :bd t)` to see how an alteration is expanded. This
-might make it easier to find issues with shadowed/non-shadowed variables.
-
-At any rate, you can usually bypass these problems using `(labels ())` locally
-to create a custom alteration. The above example might be written as follows to
-get more predictable behaviour:
-
-```lisp
-(labels ((some-alteration*? (a b)
-           (lambda (w)
-           ; alt body
-           ; use local-vars directly here if they shouldn't be shadowed.
-           )))
-  (weir:with (wer %)
-    ; then pass in the local vars or forms that should be shadowed
-    (% (some-alteration*? :a :b (first local-1) (first local-2)))))
-```
-In the above alteration, both `(first local-1)` and `(first local-2)`
-will be shadowed.
+might make it easier to find issues with shadowed/non-shadowed variables. Also,
+you can usually solve problems with shadowing using `(labels ())` locally to
+create a custom alteration.
 
 Furthermore, placing an alteration inside a loop (of any kind) can result in
 unexpected behaviour. Most notably you shouldn't reference the result of an

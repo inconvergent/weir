@@ -209,14 +209,27 @@
     (do-test (weir:edge-exists wer '(7 2)) t))
 
   (let ((wer (weir:make)))
-    (weir:with (wer %)
+    (weir:with (wer % :db t)
       (% (weir:add-vert? (vec:vec 1d0 2d0)) :a)
       (% (weir:add-vert? (vec:vec 2d0 2d0)) :b)
       (% (weir:add-edge? :a :b) (:a :b) :e1)
       (% (weir:append-edge? (first :e1) (vec:vec 4d0 3d0)) :e2 (:e1)))
 
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             '((:A 1) (:B 0) (:E1 (0 1)) (:E2 2)))))
+             '((:A 1) (:B 0) (:E1 (0 1)) (:E2 2))))
+
+  (let ((wer (weir:make)))
+    (let ((v (vec:vec 1d0 2d0)))
+      (weir:with (wer % :db t)
+        (% (weir:add-vert? (vec:vec 1d0 2d0)) :a)
+        (% (lambda (x) (list v :a)) :l (:a))
+        (% (lambda (x) (vec:sub v (vec:vec 1d0 2d0))) :l2 )
+        (setf v (vec:vec 2d0 2d0))))
+
+    (do-test (gethash :l (weir:get-alteration-result-map wer))
+             `(#s(vec:vec :x 1.0d0 :y 2.0d0) 0))
+    (do-test (gethash :l2 (weir:get-alteration-result-map wer))
+             '#s(vec:vec :x 0d0 :y 0d0))))
 
 (defun make-sfx-weir ()
   (let ((wer (weir:make)))
