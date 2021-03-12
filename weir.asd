@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "4.3.0"
+  :version "4.4.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -31,6 +31,7 @@
                (:file "project/perspective")
                (:file "project/ortho")
                (:file "draw/cpath")
+               (:file "draw/jpath")
                (:file "math/path")
                (:file "math/simplify-path")
                (:file "draw/hatch")
@@ -87,6 +88,7 @@
                (:file "pigment")
                (:file "pix-overlap")
                (:file "plot-cpath")
+               (:file "plot-jpath")
                (:file "plot-outline-path")
                (:file "plot-simplify")
                (:file "plot")

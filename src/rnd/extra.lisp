@@ -41,13 +41,30 @@
   (let ((res (make-adjustable-vector)))
     (vextend (make-adjustable-vector :init (list (aref a 0))) res)
     (loop for i of-type fixnum from 1 below (length a) do
-      (prob p
-        (vextend (make-adjustable-vector :init (list (aref a i))) res)
-        (vextend (aref a i) (aref res (1- (length res))))))
+      (prob p (vextend (make-adjustable-vector :init (list (aref a i))) res)
+              (vextend (aref a i) (aref res (1- (length res))))))
     res))
 
 
 ; SHAPES
+
+; some version of mitchell's best candidate algorithm
+; https://bl.ocks.org/mbostock/1893974/c5a39633db9c8b1f12c73b069e002c388d4cb9bf
+(defun max-distance-sample (n fx &key (sample-num 50)
+                                      (res (weir-utils:make-adjustable-vector))
+                                      (dstfx #'vec:dst2))
+  (declare (fixnum n sample-num) (array res) (function fx dstfx))
+  (labels ((-get-cand (c) (second (first c)))
+           (-closest (res* c) (loop for v across res*
+                                    minimizing (funcall dstfx v c))))
+    (loop with wanted-length of-type fixnum = (+ n (length res))
+          until (>= (length res) wanted-length)
+          do (weir-utils:vextend
+               (-get-cand (sort (loop for c in (funcall fx sample-num)
+                                      collect (list (-closest res c) c))
+                          #'> :key #'first))
+               res))
+    res))
 
 
 ; TODO: this can be optimized

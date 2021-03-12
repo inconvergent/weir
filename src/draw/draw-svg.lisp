@@ -33,15 +33,22 @@
                      :view-box (-view-box *long* *short*)))
     (:a3-portrait (cl-svg:make-svg-toplevel *svg* :height "420mm" :width "297mm"
                     :view-box (-view-box *short* *long*)))
+    (:a2-landscape (cl-svg:make-svg-toplevel *svg* :height "420mm" :width "594mm"
+                     :view-box (-view-box *long* *short*)))
+    (:a2-portrait (cl-svg:make-svg-toplevel *svg* :height "594mm" :width "420mm"
+                    :view-box (-view-box *short* *long*)))
     (otherwise (error "invalid layout. use: :a4-portrait, :a4-landscape,
-      :a3-landscape or :a3-portrait; or use (make* :height h :width w)"))))
+                      :a3-landscape, :a3-portrait, a2-landscape or a2-portrait;
+                      or use (make* :height h :width w)"))))
 
 
 (defun -get-width-height (layout)
   (case layout (:a4-landscape (list *long* *short*))
                (:a4-portrait (list *short* *long*))
                (:a3-landscape (list *long* *short*))
-               (:a3-portrait (list *short* *long*))))
+               (:a3-portrait (list *short* *long*))
+               (:a2-landscape (list *long* *short*))
+               (:a2-portrait (list *short* *long*))))
 
 (defun make (&key (layout :a4-landscape) stroke
                   (stroke-width 1.1d0) (rep-scale 1d0))
@@ -313,9 +320,9 @@
 
 ; ----- CPATH -----
 
-(defun cpath (psvg pts &key (width 1d0) closed (clim -0.5d0) stroke
-                            (slim -0.95d0) sw rs (so 1d0) ns)
-  (declare (draw-svg psvg) (list pts) (double-float so clim slim))
+(defun cpath (psvg pts &key (width 1d0) closed  stroke sw rs
+                            (slim cpath::*slim*) (clim cpath::*clim*) (so 1d0) ns)
+  (declare (draw-svg psvg) (list pts) (double-float slim clim so))
   (when (and ns rs) (error "either rs or ns must be nil"))
   (let ((rep (if ns ns (ceiling (* (-select-rep-scale psvg rs) width)))))
     (when (< rep 2)
@@ -325,6 +332,22 @@
                             (* width 0.5d0) rep
                             :closed closed :slim slim :clim clim)
           :stroke stroke :sw sw :so so)))
+
+; ----- JPATH -----
+
+(defun jpath (psvg pts &key (width 1d0) closed stroke (limits jpath::*limits*)
+                            sw rs (so 1d0) ns)
+  (declare (draw-svg psvg) (list pts) (double-float so))
+  (when (and ns rs) (error "either rs or ns must be nil"))
+  (let* ((rep (if ns ns (ceiling (* (-select-rep-scale psvg rs) width))))
+         (jp (jpath:jpath pts width :rep rep :closed closed :limits limits)))
+    (when (< rep 2) (return-from jpath
+                      (path psvg pts :stroke stroke :sw sw :so so :closed closed)))
+    (if closed
+        (loop for path in jp
+              do (path psvg path :closed t :stroke stroke :sw sw :so so))
+        (path psvg jp :stroke stroke :sw sw :so so))))
+
 
 
 ; ----- CARC -----

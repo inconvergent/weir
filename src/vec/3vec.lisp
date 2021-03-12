@@ -50,6 +50,15 @@
   (3vec (3vec-x xy) (3vec-y xy) (3vec-z xy)))
 
 
+(declaim (inline 3xy 3yx 3xz 3zx 3yz 3zy))
+(defun 3xy (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-x v) (3vec-y v)))
+(defun 3yx (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-y v) (3vec-x v)))
+(defun 3xz (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-x v) (3vec-z v)))
+(defun 3zx (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-z v) (3vec-x v)))
+(defun 3yz (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-y v) (3vec-z v)))
+(defun 3zy (v) (declare #.*opt-settings* (3vec v)) (vec (3vec-z v) (3vec-y v)))
+
+
 ; MATHS
 
 (declaim (inline 3from))

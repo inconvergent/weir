@@ -201,6 +201,11 @@
   (with-grp (wer g* g)
     (graph:get-incident-edges (grp-grph g*) v)))
 
+(defun get-incident-verts (wer v &key g)
+  (declare #.*opt-settings* (weir wer) (pos-int v))
+  (with-grp (wer g* g)
+    (graph:get-incident-verts (grp-grph g*) v)))
+
 
 (defun get-vert-inds (wer &key g order)
   "

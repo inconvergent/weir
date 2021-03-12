@@ -17,17 +17,15 @@
                                        (list 20d0 30d0 70d0 20d0)
                                        :closed t))
 
-    (loop for path in (to-list (hatch:hatch
-                                 (to-vector (cpath:outline
-                                              (list (vec:vec 800d0 700d0)
-                                                    (vec:vec 700d0 700d0)
-                                                    (vec:vec 700d0 800d0)
-                                                    (vec:vec 800d0 800d0))
-                                              (list 10d0 10d0 30d0 10d0)
-                                              :closed t))
+    (loop with outline = (cpath:outline (list (vec:vec 800d0 700d0)
+                                              (vec:vec 700d0 700d0)
+                                              (vec:vec 700d0 800d0)
+                                              (vec:vec 800d0 800d0))
+                                        (list 10d0 10d0 30d0 10d0)
+                                        :closed t)
+          for path in (to-list (hatch:hatch (to-vector outline) :rs 2.51d0
                                  :angles (list 0d0 PI5)))
           do (draw-svg:path psvg path))
-
 
     (draw-svg:save psvg (weir-utils:internal-path-string
                           "test/data/plot-outline-path"))))

@@ -35,25 +35,19 @@
 (declaim (inline hline))
 (defun hline (s &key (xy (zero)))
   (declare #.*opt-settings* (double-float s) (vec xy))
-  "
-  horizontal line top to bottom, size 2*s around xy
-  "
+  "horizontal line top to bottom, size 2*s around xy "
   (vec:ladd!* (list (vec:vec (- s) 0d0) (vec:vec s 0d0)) xy))
 
 (declaim (inline vline))
 (defun vline (s &key (xy (zero)))
   (declare #.*opt-settings* (double-float s) (vec xy))
-  "
-  vertical line top to bottom, size 2*s around xy
-  "
+  "vertical line top to bottom, size 2*s around xy"
   (vec:ladd!* (list (vec:vec 0d0 (- s)) (vec:vec 0d0 s)) xy))
 
 (declaim (inline rline))
 (defun rline (s angle &key (xy (zero)) &aux (converse (+ angle PI)))
   (declare #.*opt-settings* (double-float s angle converse) (vec xy))
-  "
-  line rotated at angle, size 2*s around xy
-  "
+  "line rotated at angle, size 2*s around xy"
   (vec:ladd!* (vec:lsmult!*
                 (list (vec:vec (cos angle) (sin angle))
                       (vec:vec (cos converse) (sin converse))) s)

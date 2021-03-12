@@ -1,6 +1,10 @@
 
 (in-package :hatch)
 
+; any fixed point will work. this magic number seemed to work well for some
+; cases i tested ... TODO: make magic number configurable?
+(defvar *magic* (vec:vec -997799.33333d0 -775577.747362d0))
+
 
 (defun stitch (lines)
   "
@@ -29,58 +33,69 @@
         finally (return res)))
 
 
-(defun mid-rad (pts)
-  (loop with mid = (vec:lmid (to-list (subseq pts 0 (1- (length pts)))))
-        for p across pts
-        maximize (vec:dst mid p) into rad
-        finally (return (values mid rad))))
+(defun -hatch-mid (pts)
+  (loop with n = (length pts)
+        with mid = (vec:zero)
+        repeat (1- n) for p across pts
+        do (vec:add! mid p)
+        finally (return (vec:sdiv mid (coerce (1- n) 'double-float)))))
 
+(defun segdst (mid a esize)
+  "
+  find the point along the line with angle a through mid that is closest to an
+  arbitrary fixed point.  this way all hatches with same angle and rs will line
+  up.
+  "
+  (let ((line (vec:rline esize a :xy mid)))
+    (multiple-value-bind (_ tt) (vec:segdst line *magic*)
+      (declare (ignore _))
+      (vec:dst mid (vec:lon-line tt line)))))
 
-(defun -get-lines (mid dst a n &key (offset-fx #'vec:add))
-  (loop with slide = (vec:smult (vec:cos-sin (- a (* 0.5 PI))) dst)
-        with offset = (vec:smult (vec:cos-sin a) dst)
-        with res = (make-adjustable-vector)
-        for s in (math:linspace n 0d0 1d0)
-        do (let ((xy (vec:on-line s mid (funcall offset-fx mid offset))))
-             (vextend (list (vec:add xy slide) (vec:sub xy slide))
-                      res))
-        finally (return res)))
+(defun -get-angle-zero-point-lines (pts a rs esize)
+  "
+  get evenly spaced lines along angle line a that always match up for same
+  (rs angle).
+  "
+  (let* ((mid (-hatch-mid pts))
+         (va (vec:cos-sin a))
+         (rad (+ (* 4 rs) (loop for p across pts maximize (vec:dst mid p))))
+         (slide (vec:rline rad (- a (* 0.5 PI))))
+         (d (segdst mid a esize))
+         (zp- (+ rad (- (mod (- d rad) rs) rs)))
+         (zp+ (- rad (mod (+ d rad) rs))))
+    (loop for mark in
+            (vec:lon-line*
+              (math:linspace (1+ (round (+ zp- zp+) rs)) 0d0 1d0 :end t)
+              (list (vec:sub mid (vec:smult va zp-))
+                    (vec:add mid (vec:smult va zp+))))
+          collect (vec:ladd* slide mark))))
 
 
 (defun -line-hatch (res line pts)
+  "make the actual hatches along line"
   (let ((ixs (make-adjustable-vector)))
-
     (loop for i from 0 below (1- (length pts))
           do (multiple-value-bind (x s)
                (vec:segx line (list (aref pts i) (aref pts (1+ i))))
                (if x (vextend s ixs))))
-
     (setf ixs (sort ixs #'<))
-
     (loop for i from 0 below (1- (length ixs)) by 2
           do (vextend (list (vec:lon-line (aref ixs i) line)
                             (vec:lon-line (aref ixs (1+ i)) line))
-                      res))
-
-    res))
+                      res))))
 
 
-(defun hatch (pts &key (angles 0d0) (rs 1d0)
+(defun hatch (pts &key (angles 0d0) (rs 3d0) (esize 3000d0)
                   &aux (pts* (ensure-vector pts)))
   "
   draw hatches at angles inside the area enclosed by the path in pts
   "
   (when (> (vec:dst (aref pts* 0) (vector-last pts*)) 0.0001d0)
         (error "first and last element in pts must be close to each other."))
-  (multiple-value-bind (mid dst) (mid-rad pts*)
-    (loop with res = (make-adjustable-vector)
-          with n = (ceiling (* 0.5d0 rs dst))
-          for a in (if (equal (type-of angles) 'cons) angles (list angles))
-          do (loop for line across (-get-lines mid dst a n)
-                   do (-line-hatch res line pts*))
-             (loop for line across
-                     (subseq (-get-lines mid dst a n :offset-fx #'vec:sub) 1)
-                   do (-line-hatch res line pts*))
-          ; TODO: probably need to filter out empty lines in result
-          finally (return res))))
+
+  (loop with res = (make-adjustable-vector)
+        for a in (if (equal (type-of angles) 'cons) angles (list angles))
+        do (loop for line in (-get-angle-zero-point-lines pts* a rs esize)
+                 do (-line-hatch res line pts*))
+        finally (return res)))
 

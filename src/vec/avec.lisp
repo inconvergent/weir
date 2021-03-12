@@ -68,6 +68,7 @@
         (aref a (1+ ii)) (the double-float (vec:vec-y v)))
   v)
 
+(defsetf getv setv)
 
 (declaim (inline 3getv))
 (defun 3getv (a i &aux (ii (* 3 i)))
@@ -84,6 +85,8 @@
         (aref a (1+ ii)) (the double-float (vec:3vec-y v))
         (aref a (+ 2 ii)) (the double-float (vec:3vec-z v)))
   v)
+
+(defsetf 3getv 3setv)
 
 
 ; TODO: generalize these functions
@@ -168,5 +171,40 @@
       (declare (pos-int ,i0 ,i1 ,i2) (double-float ,x ,y ,z))
       (let ((,res (progn ,@body)))
         (setf (aref ,a ,i0) ,x (aref ,a ,i1) ,y (aref ,a ,i2) ,z)
+        ,res))))
+
+
+(defmacro with-vec* ((a ind xy) &body body)
+  "
+  assign values if a[ind] to xy. after body is executed, the current
+  value of xy will be written back to a[ind].
+  "
+  (declare (symbol xy))
+  (alexandria:with-gensyms (i0 i1 res)
+    `(let* ((,i0 (* 2 ,ind))
+            (,i1 (+ ,i0 1))
+            (,xy (vec:vec (aref ,a ,i0) (aref ,a ,i1))))
+      (declare (pos-int ,i0 ,i1) (vec:vec ,xy))
+      (let ((,res (progn ,@body)))
+        (setf (aref ,a ,i0) (vec:vec-x ,xy)
+              (aref ,a ,i1) (vec:vec-y ,xy))
+        ,res))))
+
+(defmacro 3with-vec* ((a ind xy) &body body)
+  "
+  assign values if a[ind] to xy. after body is executed, the current
+  value of xy will be written back to a[ind].
+  "
+  (declare (symbol xy))
+  (alexandria:with-gensyms (i0 i1 i2 res)
+    `(let* ((,i0 (the pos-int (* 3 (the pos-int ,ind))))
+            (,i1 (+ ,i0 1))
+            (,i2 (+ ,i0 2))
+            (,xy (vec:3vec (aref ,a ,i0) (aref ,a ,i1) (aref ,a ,i2))))
+      (declare (pos-int ,i0 ,i1 ,i2) (vec:3vec ,xy))
+      (let ((,res (progn ,@body)))
+        (setf (aref ,a ,i0) (vec:3vec-x ,xy)
+              (aref ,a ,i1) (vec:3vec-y ,xy)
+              (aref ,a ,i2) (vec:3vec-z ,xy))
         ,res))))
 

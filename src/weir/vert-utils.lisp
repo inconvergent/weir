@@ -272,14 +272,15 @@
   t)
 
 ; TODO: this is stil more than a little inefficient
-(defun relative-neighborhood! (wer rad &key g)
+(defun relative-neighborhood! (wer rad &key g (build-zonemap t))
   "
   find the relative neigborhood graph (limited by the radius rad) of verts
   in wer. the graph is made in grp g.
   "
-  (declare #.*opt-settings* (weir wer) (double-float rad))
+  (declare #.*opt-settings* (weir wer) (double-float rad)
+                                       (boolean build-zonemap))
   (-dimtest wer)
-  (build-zonemap wer rad)
+  (when build-zonemap (build-zonemap wer rad))
   (let ((c 0))
     (declare (pos-int c))
     (itr-verts (wer v)

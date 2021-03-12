@@ -136,7 +136,13 @@
     #:3vec-y
     #:3vec-z
     #:3with-xy
+    #:3xy
+    #:3xz
+    #:3yx
+    #:3yz
     #:3zero
+    #:3zx
+    #:3zy
     #:add
     #:add!
     #:angle
@@ -256,18 +262,17 @@
     #:3minmax
     #:3setv
     #:3with-vec
+    #:3with-vec*
     #:avec
     #:dst
     #:dst2
     #:getv
     #:minmax
+    #:setv
     #:with-vec
-    #:setv)
+    #:with-vec*)
   (:import-from #:weir-utils
-    #:*opt-settings*
-    #:to-list
-    #:make-adjustable-vector
-    #:vextend))
+    #:*opt-settings*))
 
 (defpackage #:parallel
   (:use #:common-lisp)
@@ -414,6 +419,7 @@
     #:in-rect
     #:in-square
     #:make-rnd-state
+    #:max-distance-sample
     #:nin-circ
     #:nin-rect
     #:nin-square
@@ -545,6 +551,7 @@
     #:cycle->edge-set
     #:cycle-basis->edge-sets
     #:del
+    #:del-simple-filaments
     #:edge-set->cycle
     #:edge-set->graph
     #:edge-set-symdiff
@@ -553,6 +560,7 @@
     #:get-cycle-basis
     #:get-edges
     #:get-incident-edges
+    #:get-incident-verts
     #:get-min-spanning-tree
     #:get-num-edges
     #:get-num-verts
@@ -560,7 +568,6 @@
     #:get-verts
     #:make
     #:mem
-    #:del-simple-filaments
     #:vmem
     #:with-graph-edges)
   (:import-from #:weir-utils
@@ -656,6 +663,21 @@
     #:*opt-settings*
     #:ensure-vector
     #:make-adjustable-vector
+    #:to-list
+    #:to-vector
+    #:vextend))
+
+(defpackage #:jpath
+  (:use #:common-lisp)
+  (:export
+    #:jpath
+    #:path->joints
+    #:path->diagonals)
+  (:import-from #:weir-utils
+    #:*opt-settings*
+    #:ensure-vector
+    #:make-adjustable-vector
+    #:to-adjustable-vector
     #:to-list
     #:to-vector
     #:vextend))
@@ -757,8 +779,8 @@
 (defpackage #:draw-svg
   (:use #:common-lisp)
   (:export
-    #:*short*
     #:*long*
+    #:*short*
     #:bzspl
     #:carc
     #:circ
@@ -768,6 +790,7 @@
     #:draw
     #:get-rnd-svg-color
     #:hatch
+    #:jpath
     #:make
     #:make*
     #:path
