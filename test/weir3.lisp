@@ -75,9 +75,9 @@
     (weir:add-edge! wer 2 0)
 
     (weir:with (wer %)
-      (% (weir:3split-edge? 0 1 :xy (vec:3vec 30d0 20d0 3d0)) :a)
-      (% (weir:3lsplit-edge? '(1 2) :xy (vec:3vec 31d0 23d0 4d0)) :b)
-      (% (weir:3lsplit-edge? '(2 1) :xy (vec:3vec 32d0 24d0 5d0)) :c))
+      (% (weir:3split-edge? 0 1 :xy (vec:3vec 30d0 20d0 3d0)) :res :a)
+      (% (weir:3lsplit-edge? '(1 2) :xy (vec:3vec 31d0 23d0 4d0)) :res :b)
+      (% (weir:3lsplit-edge? '(2 1) :xy (vec:3vec 32d0 24d0 5d0)) :res :c))
 
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
              '((:a 4) (:b nil) (:c 3)))

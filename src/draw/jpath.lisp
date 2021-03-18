@@ -9,13 +9,13 @@
 
 (defun ht () (make-hash-table :test #'equal))
 (defun ori (in out) (> (vec:cross in out) 0d0))
-(defmacro o++ (p v w) `(vec:add! (vec:add p ,v) ,w))
-(defmacro o-- (p v w) `(vec:sub! (vec:sub p ,v) ,w))
-(defmacro o+- (p v w) `(vec:sub! (vec:add p ,v) ,w))
-(defmacro o-+ (p v w) `(vec:add! (vec:sub p ,v) ,w))
+(defmacro o++ (p v w) `(vec:add! (vec:add ,p ,v) ,w))
+(defmacro o-- (p v w) `(vec:sub! (vec:sub ,p ,v) ,w))
+(defmacro o+- (p v w) `(vec:sub! (vec:add ,p ,v) ,w))
+(defmacro o-+ (p v w) `(vec:add! (vec:sub ,p ,v) ,w))
 
 (defstruct (joint (:constructor -make-joint))
-  (p (vec:zero) :type vec:vec :read-only t)
+  (pt (vec:zero) :type vec:vec :read-only t)
   (w 0d0 :type double-float :read-only t)
   (orientation t :type boolean :read-only t)
   (alpha 0d0 :type double-float :read-only t)
@@ -54,17 +54,17 @@
                 (s (/ w (sin alpha))))
            (vec:smult! in s)
            (vec:smult! out s)
-           (-make-joint :p p :w w :i i :alpha alpha :in in :out out
+           (-make-joint :pt p :w w :i i :alpha alpha :in in :out out
                         :orientation (ori in out) :grid (-make-joint-grid p in out))))
        (make-start (p b)
          (let* ((out (vec:norm! (vec:sub b p) :s w))
                 (in (vec:rot out *pi2*)))
-           (-make-joint :p p :w w :mode :start :alpha *pi2*
+           (-make-joint :pt p :w w :mode :start :alpha *pi2*
                         :in in :out out :grid (-make-joint-grid p in out))))
        (make-end (i a p)
          (let* ((in (vec:norm! (vec:sub p a) :s w))
                 (out (vec:rot in (- *pi2*))))
-           (-make-joint :p p :w w :i i :mode :end :alpha (- *pi2*)
+           (-make-joint :pt p :w w :i i :mode :end :alpha (- *pi2*)
                         :in in :out out :grid (-make-joint-grid p in out))))
        (ci (i) (aref path (mod i n)))
        (closed-path->joints ()

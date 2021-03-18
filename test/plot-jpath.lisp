@@ -1,27 +1,27 @@
 (in-package #:weir-tests)
 
 
-(defun make-line (xy s &optional a)
+(defun jpath-make-line (xy s &optional a)
   (let ((res (list (vec:add xy (vec:vec 0d0 (- s)))
                    (vec:add xy (vec:vec 6d0 0d0))
                    (vec:add xy (vec:vec 0d0 s)))))
     (if a (rot res a xy) res)))
 
-(defun make-line* (xy s &optional a)
+(defun jpath-make-line* (xy s &optional a)
   (let ((res (list (vec:add xy (vec:vec 0d0 (+ s)))
                    (vec:add xy (vec:vec 6d0 0d0))
                    (vec:add xy (vec:vec 0d0 (- s))))))
     (if a (rot res a xy) res)))
 
 
-(defun make-box (xy s &optional a)
+(defun jpath-make-box (xy s &optional a)
   (let ((res (list (vec:add xy (vec:vec (- s) (- s)))
                    (vec:add xy (vec:vec s (- s)))
                    (vec:add xy (vec:vec s s))
                    (vec:add xy (vec:vec (- s) s)))))
     (if a (rot res a xy) res)))
 
-(defun make-box* (xy s &optional a)
+(defun jpath-make-box* (xy s &optional a)
   (let ((res (list (vec:add xy (vec:vec (- s) (- s)))
                    (vec:add xy (vec:vec (- s) s))
                    (vec:add xy (vec:vec s s))
@@ -29,7 +29,7 @@
     (if a (rot res a xy) res)))
 
 
-(defun make-s (xy s &optional a)
+(defun jpath-make-s (xy s &optional a)
   (let ((res (list (vec:add xy (vec:vec (- s) (- s)))
                    (vec:add xy (vec:vec s (- s)))
                    (vec:add xy (vec:vec s 0d0))
@@ -39,7 +39,7 @@
     (if a (rot res a xy) res)))
 
 
-(defun rot (v a xy)
+(defun rot% (v a xy)
   (loop for b in v collect (vec:rot b a :xy xy)))
 
 
@@ -50,17 +50,17 @@
 
       (loop for a in (math:linspace 15 0d0 (* 2d0 PI))
             and x in (math:linspace 15 60d0 940d0) do
-        (vextend (list nil (make-box (vec:vec x 100d0) 10d0 a)) res)
-        (vextend (list nil (make-box* (vec:vec x 200d0) 10d0 a)) res)
+        (vextend (list nil (jpath-make-box (vec:vec x 100d0) 10d0 a)) res)
+        (vextend (list nil (jpath-make-box* (vec:vec x 200d0) 10d0 a)) res)
 
-        (vextend (list nil (make-line (vec:vec x 490d0) 10d0 a)) res)
-        (vextend (list nil (make-line* (vec:vec x 510d0) 10d0 a)) res)
+        (vextend (list nil (jpath-make-line (vec:vec x 490d0) 10d0 a)) res)
+        (vextend (list nil (jpath-make-line* (vec:vec x 510d0) 10d0 a)) res)
 
-        (vextend (list t (make-box (vec:vec x 300d0) 10d0 a)) res)
-        (vextend (list t (make-box* (vec:vec x 400d0) 10d0 a)) res)
+        (vextend (list t (jpath-make-box (vec:vec x 300d0) 10d0 a)) res)
+        (vextend (list t (jpath-make-box* (vec:vec x 400d0) 10d0 a)) res)
 
-        (vextend (list t (make-s (vec:vec x 700d0) 20d0 (rnd:rnd* PI))) res)
-        (vextend (list nil (make-s (vec:vec x 600d0) 20d0 (rnd:rnd* PI))) res))
+        (vextend (list t (jpath-make-s (vec:vec x 700d0) 20d0 (rnd:rnd* PI))) res)
+        (vextend (list nil (jpath-make-s (vec:vec x 600d0) 20d0 (rnd:rnd* PI))) res))
 
       (vextend (list t (list (vec:vec 400d0 900d0)
                              (vec:vec 300d0 900d0)
@@ -101,7 +101,7 @@
 
       (vextend (list nil (list (vec:vec 900d0 900d0)
                                (vec:vec 900d0 800d0))) res)
-      (vextend (list nil (rot (list (vec:vec 900d0 900d0)
+      (vextend (list nil (rot% (list (vec:vec 900d0 900d0)
                                     (vec:vec 900d0 800d0))
                               (rnd:rnd*)
                               (vec:vec 900d0 900d0))) res)

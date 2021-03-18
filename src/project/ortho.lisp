@@ -46,9 +46,7 @@ view plane offset (xy) and scaling (s).
 
 (defun make-dstfx (proj)
   (declare #.*opt-settings*)
-  "
-  distance from pt to camera plane with current parameters
-  "
+  "distance from pt to camera plane with current parameters"
   (let ((cam (ortho-cam proj))
         (vpn (ortho-vpn proj)))
     (declare (vec:3vec cam vpn))
@@ -60,9 +58,7 @@ view plane offset (xy) and scaling (s).
 
 (defun make-projfx (proj)
   (declare #.*opt-settings*)
-  "
-  function to project pt into 2d with current parameters
-  "
+  "function to project pt into 2d with current parameters"
   (let ((su (ortho-su proj))
         (sv (ortho-sv proj))
         (cam (ortho-cam proj))
@@ -78,9 +74,7 @@ view plane offset (xy) and scaling (s).
 
 (defun make-rayfx (proj)
   (declare #.*opt-settings* (ortho proj))
-  "
-  cast a ray in direction -vpn from pt
-  "
+  "cast a ray in direction -vpn from pt"
   (let ((dir (vec:3smult! (vec:3neg (ortho-vpn proj)) (ortho-raylen proj))))
     (declare (vec:3vec dir))
     (lambda (pt) (declare (vec:3vec pt))
@@ -189,9 +183,7 @@ view plane offset (xy) and scaling (s).
 (declaim (inline project))
 (defun project (proj pt)
   (declare #.*opt-settings* (ortho proj) (vec:3vec pt))
-  "
-  project single point
-  "
+  "project single point"
   (values (funcall (ortho-projfx proj) pt)
           (funcall (ortho-dstfx proj) pt)))
 
@@ -199,10 +191,7 @@ view plane offset (xy) and scaling (s).
 (declaim (inline project*))
 (defun project* (proj path)
   (declare #.*opt-settings* (ortho proj) (list path))
-  "
-  project list of points
-  returns list (pts dsts)
-  "
+  "project list of points. returns list (pts dsts)"
   (with-struct (ortho- projfx dstfx) proj
     (declare (function projfx dstfx))
     (loop for pt of-type vec:3vec in path
@@ -218,9 +207,7 @@ view plane offset (xy) and scaling (s).
 (declaim (inline project-offset))
 (defun project-offset (proj pt &key (fx #'-identity2))
   (declare #.*opt-settings* (ortho proj) (vec:3vec pt) (function fx))
-  "
-  perform (fx :d (dstfx pt) :xy (projfx pt))
-  "
+  "perform (fx :d (dstfx pt) :xy (projfx pt))"
   (with-struct (ortho- projfx dstfx) proj
     (declare (function projfx dstfx))
     (let ((d (funcall dstfx pt)))
@@ -231,9 +218,7 @@ view plane offset (xy) and scaling (s).
 (declaim (inline project-offset*))
 (defun project-offset* (proj path &key (fx #'-identity2))
   (declare #.*opt-settings* (ortho proj) (list path) (function fx))
-  "
-  see project-offset
-  "
+  "see project-offset"
   (with-struct (ortho- projfx dstfx) proj
     (declare (function projfx dstfx))
     (loop for pt of-type vec:3vec in path

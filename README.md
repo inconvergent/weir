@@ -200,10 +200,84 @@ Main components:
 ## Weir Graphs and Alterations
 
 An `alteration` is a change that will be applied to the structure at the end of
-a given context. In many ways this is similar to map/reduce.
+a given context. In practical terms, an alteration is a function that returns a
+`lambda` (or just a `lambda`).
 
-Here is and example of manipulating a `weir` instance called `wer` using
-`alterations`. Alteration constructors are postfixed with `?`.
+The main motivation behid this is that this makes it possible to "queue" up a
+number of changes that will be applied at a later time. This makes it possible
+to access the state in the `weir` instance while you are creating the
+alterations. Without there being any changes made to the state of the `weir`
+instance while the alterations are being created. Once all alterations are
+created, they will be applied.
+
+Existing alterations in `weir` are postfixed `?` by convention, and it might
+look like this:
+
+```lisp
+(weir:with (wer %)
+  ( ; some code
+    (% (weir:add-vert? ...))
+    ; more code
+    (% (weir:add-edge? ...))))
+```
+
+all `(% ...)` forms inside the weir context will cause the alteration inside to
+be created and collected. They will be executed at the end of the context. if
+an alteration evaluates to nil, nothing will happen.
+
+### Names and Args
+
+You can assign a name (`:res`) to the result of an alteration. This makes it
+possible to create alterations that depend (`:arg`) on the result of other
+alterations:
+
+```lisp
+(weir:with (wer %)
+  (let ((pt (...)))
+    (% (weir:add-vert? pt) :res :a) ; alteration result is named :a
+    (% (weir:add-vert? (vec:vec 1d0 2d0)) :res 'b) ; result is named 'b
+    (% (weir:add-edge? :a 'b) :arg (:a 'b)))) ; uses :a and 'b
+```
+
+Note that `res` must be a keyword, symbol, or a variable with keyword or symbol
+value. Similarly, `arg` must be a list of `res` elements that exist inside the
+same context. make sure that all elements in the `:arg` are present in the
+context, or the code will loop infinitely.
+
+it is always possible to both reference future results, and assign the result a
+name. The order the order of `:res` and `:arg` does not matter:
+
+```lisp
+(% (some-alteration? :a :b) :res :x :arg (:a :b)) ; is equivalent to
+(% (some-alteration? :a :b) :arg (:a :b) :res :x)
+```
+
+Results will be available after the `(with:weir ...)` context. See
+`(get-alteration-result-list)` or `(get-alteration-result-map)`.  Also, note
+that using the same name for multiple alterations _will_ result in undefined
+behaviour.
+
+### Dependency and Futures
+
+You can consider a named alteration as something akin to a _future_; the value
+of `:res` is a reference to a value that does not yet exist. For this to work,
+any alteration that depends on a future that fails to be fulfilled will be
+skipped.
+
+As an example, we can make the alteration `prob-add-edge?` like this:
+
+```lisp
+(defun prob-add-edge? (l a b)
+  'add edge (a b) with probability p'
+  (lambda (w) (when (< (rnd:rnd 100d0) l)
+                    (add-edge! w a b))))
+```
+
+This will attempt to create edge `(a b)`, but only if the random number is less
+than `l`.  This is to illustrate that the alteration may or may not attempt to
+`weir` instance.  If no edge is created, the above lambda will return `nil`.
+
+Here is a an example of use:
 
 ```lisp
 ; context start
@@ -214,81 +288,128 @@ Here is and example of manipulating a `weir` instance called `wer` using
   ; (% ...) is used to accumulate alterations
   ; alterations are applied at the end of (weir:with ...)
   (weir:with (wer %)
-    ; iterate vertices
+    ; iterate all vertices in wer
     (weir:itr-verts (wer v)
-      ; move alteration
-      (% (weir:move-vert? v (rnd:in-circ 1d0)))
-      ; w will be an arbitrary
-      ; vertex in wer
+      (% (move-vert? v (rnd:in-circ 10d0)))
+      ; w will be an arbitrary vertex in wer
       (weir:with-rnd-vert (wer w)
-        ; join v and w if they are closer than d
-        (when (< (weir:edge-length wer v w) d)
-              ; add edge
-              (% (weir:add-edge? v w)))))))
+        (% (prob-add-edge? (weir:edge-length wer v w) v w))))))
 ```
 
-It is possible to reference alterations inside a `(weir:with ...)` context. A
-simple example looks like this:
+The important thing to note here is that it is _crucial_ that the
+length of edge `(v w)` is calculated outside `(defun prob-add-edge? ...)`.
+This ensure that ` (weir:edge-length wer v w)` is the length of the edge
+_before_ the calls to `(move-vert? ...)` have a chance to move either `v` or
+`w`.
 
-```lisp
-(weir:with (wer %)
-  ; add vert, named :a
-  (% (weir:add-vert? pt) :a)
-  ; add vert, named :b
-  (% (weir:add-vert? pt) :b)
-  ; use :a and :b to add new edge, if both are added
-  (% (weir:add-edge? :a :b) (:a :b)))
-```
+Naturally, you can construct an alteration that checks the length of the edge
+inside the  `lambda` in `(prob-add-edge? ...)`, but this will result in
+different behaviour. In this case, any edge length will be calculated while
+all the other vertices are moving around. Thus resulting in what can be
+considered "unexpected side effects".
 
-You can also define your own arbitrary alterations. There is an example of
-custom alterations and references in `examples/custom-alt.lisp`.
-
-All alterations must follow a specific format. There can be at most
-three forms inside `(% ...)`. The first must be a form that evaluates to a
-lambda (or a lambda, this is experimental). This function should accept a
-single argument. When the alteration is applied it is called with the current
-`weir` instance as the only argument.
-
-The second and third arguments are both optional, and the order does not
-matter. Use a `:keyword` if you want to give the alteration result a name; and
-a list of keywords, to indicate that you are using references to other named
-alteration results in this alteration.
-
+This becomes more clear if you consider an n-body simulation. If any single
+body in the simulation moves before you have calculated the force between each
+pair of bodies, you will get an incorrect result.
 
 ### Shadowing
 
-All arguments to an alteration that are atoms, or forms that do not contain a
-reference to another alteration result, will be shadowed before the alteration
-is collected. This is the behaviour you will usually want in an example such as
-the one above. However, it might cause unexpected issues if you write something
-like.
+As we have mentioned, arguments to an alteration may, or may not, exist right
+away.  To handle this, arguments to an alteration will be shadowed before the
+alteration is collected. This applies to arguments that are atoms, or forms
+that do not contain a reference to a future alteration result. This is the
+behaviour you will usually want in an example such as the one above. But it
+might cause unexpected behaviour.
+
+As an example of what happes, consider the alteration:
 
 ```lisp
-
-(% (some-alteration? local-var (first local-var-1) :a
-                     (list :b (first local-var-2))) (:a :b))
+(% (my-alteration? (first var-1)
+                   :a
+                   (my-function (rnd:rnd) :b (second var-2)))
+   (:a :b))
 ```
 
-The variables/forms that will be shadowed here are: `local-var`, `(first
-local-var-1)`, and `(first local-var-2)`.
+This will be expanded by the macro to something similar to:
+
+```lisp
+(LET ((#:|non-atom:91| (FIRST VAR-1)) ; values are evaluated at time of collection
+      (#:|non-atom:92| (RND:RND))
+      (#:|non-atom:93| (SECOND VAR-2)))
+  (LAMBDA (#:WNAME90)
+    (CASE (WEIR::-IF-ALL-RESOLVED #:ALT-RES88 (LIST :A :B))
+      (:OK ; :A and :B both have a value
+       (VALUES T
+               (FUNCALL
+                (THE FUNCTION
+                     (MY-ALTERATION? #:|non-atom:91| (GETHASH :A #:ALT-RES88)
+                      (MY-FUNCTION #:|non-atom:92| (GETHASH :B #:ALT-RES88)
+                                     #:|non-atom:93|)))
+                #:WNAME90)))
+      (:BAIL (VALUES T NIL)) ; either :A or :B returned nil. skip alteration
+      (:WAIT (VALUES NIL NIL))))) ; :A or :B does not yet exist
+```
+
+As you can see, the variables/forms that will be shadowed here are: `(first var-1)`,
+`(second var-2)` and `(rnd:rnd)`.
 
 You can use `(weir:with ... :bd t)` to see how an alteration is expanded. This
 might make it easier to find issues with shadowed/non-shadowed variables. Also,
-you can usually solve problems with shadowing using `(labels ())` locally to
-create a custom alteration.
+you can usually solve some problems you might encounter by defining custom
+alterations locally (but outside `weir:with`) using `(labels ())`.
 
-Furthermore, placing an alteration inside a loop (of any kind) can result in
-unexpected behaviour. Most notably you shouldn't reference the result of an
-alteration in a loop from another alteration: It does not stack up all results,
-and it will not wait until the loop is finished to resolve any dependent
-alterations.
+### Looping
 
-*NOTE: Before it was possible to reference other alteration results, `(% ...)`
-was a function. This eradicated the need for (most of) these complex shadowing
-rules. I might try to change the behaviour once I have a better understanding
-of what behaviour I actually find convenient. However, I'm not currently sure
-how avoid these rules when some arguments do not exist at the time the
-alteration is collected.*
+It is possible to use `:ref` and `:arg` inside loops as well. but it requires
+a bit more careful consideration. Here is an example:
+
+```lisp
+(weir:with (wer % :db t)
+  (loop for x in (math:linspace 20 -20d0 20d0)
+        do (loop for z in (list 1d0 2d0)
+                 do (let ((xy (vec:vec x y z))
+                          (s (vec:vec 1d0 80d0))
+                          (g (gensym "g"))) ; create a distinct name
+                      (% (weir:add-grp? :name (gensym "line")) :res g)
+                      (% (weir:add-path? (list (vec:sub xy s) (vec:add xy s))
+                         :g g) :arg (g))))))
+```
+
+The second alteration will be expanded to:
+
+```lisp
+(LET ((#:|non-atom:8| (LIST (VEC:SUB XY S) (VEC:ADD XY S))))
+  (LAMBDA (#:WNAME7)
+    ; every G is now a distinct future
+    (CASE (WEIR::-IF-ALL-RESOLVED #:ALT-RES3 (LIST G))
+      (:OK
+       (VALUES T
+               (FUNCALL
+                (THE FUNCTION
+                     (WEIR:ADD-PATH? #:|non-atom:8| :G
+                                     (GETHASH G #:ALT-RES3)))
+                #:WNAME7)))
+      (:BAIL (VALUES T NIL))
+      (:WAIT (VALUES NIL NIL)))))
+
+```
+
+### Custom Alterations
+
+You can define your own arbitrary alterations. There is an example of
+custom alterations and references in `examples/custom-alt.lisp`.
+
+### Final Note
+
+In the previous implementations of the `(weir:with ...)` context, (% ...) was a
+function. This ensured that the arguments to the alteration, and indeed the
+lambda inside the alteration, was created before the end of the context. This
+eradicated the need for these complex shadowing rules. I'm not currently sure
+whether it is possible to avoid shadowing as long as some arguments do not
+exist at the time the alteration is collected.
+
+Also, I use the term "shadowing" above. Not sure if this is really appropriate,
+but I failed to think of a better term
 
 
 ## Use

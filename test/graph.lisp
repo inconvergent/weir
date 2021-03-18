@@ -5,44 +5,31 @@
   (let ((grph (graph:make)))
 
     (do-test (graph:add grph 1 1) t)
-
     (do-test (graph:add grph 1 2) t)
-
     (do-test (graph:add grph 1 2) nil)
-
     (do-test (graph:add grph 2 1) nil)
-
     (do-test (graph:get-num-edges grph) 2)
-
     (do-test (graph:get-edges grph) '((1 2) (1 1)))
-
     (do-test (graph:add grph 20 5) t)
-
     (do-test (graph:get-edges grph) '((5 20) (1 2) (1 1)))
-
     (do-test (graph:del grph 1 2) t)
-
     (do-test (graph:del grph 1 2) nil)
-
     (do-test (graph:get-edges grph) '((5 20) (1 1)))
-
     (do-test (graph:get-num-edges grph) 2)
-
     (do-test (graph:mem grph 1 4) nil)
-
     (do-test (graph:mem grph 1 1) t)
-
     (do-test (sort (graph:get-verts grph) #'<) '(1 5 20))
-
     (do-test (graph:del grph 1 1) t)
-
     (do-test (graph:get-edges grph) '((5 20)))
-
     (do-test (sort (graph:get-verts grph) #'<) '(5 20))
-
     (do-test (graph:del grph 5 20) t)
-
     (do-test (sort (graph:get-verts grph) #'<) nil))
+
+  (do-test (graph:edge-set->path '((3 4) (4 5) (5 6) (1 2) (2 3)))
+                                 '(1 2 3 4 5 6) )
+  (do-test (graph:edge-set->path '((1 2))) '(1 2))
+  (do-test (graph:edge-set->path '()) nil)
+  (do-test (graph:edge-set->path '((3 4) (4 5))) '(3 4 5))
 
   (let ((grph (graph:make)))
     ; ensure that mutating one graph does not effect the other
@@ -54,7 +41,6 @@
       (graph:del new-grph 1 4)
 
       (do-test (length (graph:get-edges grph)) 3)
-
       (do-test (length (graph:get-edges new-grph)) 2)))
 
   (let ((grph (graph:make)))

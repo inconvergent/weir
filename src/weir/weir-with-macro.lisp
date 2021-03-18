@@ -84,7 +84,6 @@
            g))
        (-match-refp (r ref*)
          "t if r matches any symbol in ref"
-         (list :ref ref* r (some (lambda (x) (eql x r)) ref*))
          (some (lambda (x) (equal x r)) ref*))
        (-any-futures (root* ref*)
          "t if root contains any refs"
@@ -134,10 +133,12 @@
   "convert to future if alteration has references to other alterations in the
    same block."
 
-  (unless (every (lambda (r) (keywordp r)) ref)
-          (error "refs must be (keywords) or nil, got ~a" ref))
-  (when (and name (not (keywordp name)))
-        (error "name must be keyword or nil, got: ~a" name))
+  (unless (or (not ref) (listp ref))
+          (error "ref must be a list or nil, got ~a" ref))
+  (unless (every (lambda (r) (atom r)) ref)
+          (error "all refs must be variable/keyword/symbol or nil, got ~a" ref))
+  (when (and name (not (atom name)))
+        (error "res must be variable/keyword/symbol or nil, got: ~a" name))
 
   (labels
     ((-call-fx (wname expr*)
@@ -164,7 +165,7 @@
         (if ref ; expr depends on future result
             (-let-over-lambda gs->arg
               `(lambda (,wname)
-                 (case (-if-all-resolved ,alt-res ',ref)
+                 (case (-if-all-resolved ,alt-res (list ,@ref))
                        (:ok (values t ,(-call-fx wname
                                          (-subst-all-refs expr-gs ref alt-res))))
                        (:bail (values t ,(-set-bail)))
@@ -176,64 +177,25 @@
 
 (defmacro with ((wer accfx &key db) &body body)
   (declare (symbol wer accfx) (boolean db))
-  "
-  creates a context for manipulating weir via alterations.
-  example:
-
-    (weir:with (wer %)
-      (% (weir:add-edge? ...)))
-
-  all (% ...) forms inside the weir context will cause the alteration inside to
-  be created, collected and executed. if it is nil, nothing happens.
-
-  you can assign a name to an alteration result, and reference future
-  alteration results.
-
-  names must be keywords: :a
-  references must be a list of keywords: (:a :b)
-
-  example:
-
-    (weir:with (wer %)
-      (% (weir:add-vert? pt) :a)
-      (% (weir:add-vert? pt) :b)
-      (% (weir:add-edge? :a :b) (:a :b)))
-
-  it is always possible to both reference future results, and assign a name to
-  the current the alteration (result). that is, the second and third arguments
-  to (% ...) are both optional.
-
-  results will be available after call to (with:weir ...), see
-  (get-alteration-result-list) or (get-alteration-result-map).
-  note that using the same name for multiple alterations might result in
-  unexpected behaviour.
-
-  see README for further details. particularly on behaviour when shadowing
-  variables in alterations.
-  "
+  "creates a context for manipulating weir via alterations (see README)"
   (labels
     ((-get-name-ref (root)
-       "extract name and refs of an alteration as it is collected."
-       (loop with ref = nil
-             with name = nil
-             for v in root
-             do (when (keywordp v) (setf name v))
-                (when (consp v) (setf ref v))
-             finally (return (values name ref))))
+       "extract name (res) and refs (arg) of an alteration."
+        (values (getf root :res)
+                (getf root :arg)))
 
      (-do-transform-to-future (root alt-res &aux (expr (first root))
                                                  (root* (cdr root)))
        (declare (symbol alt-res) (list root* expr))
        "wrap alteration in closure, so it can be used as a future."
-       (unless (<= 0 (length root*) 3)
+       (unless (<= 0 (length root*) 5)
                (error "incorrect alteration, got: ~a" root*))
        (multiple-value-bind (name ref) (-get-name-ref root*)
-         `(progn
-            ; print macro expansion for debug
-            ,(when db `(progn (format t "~%~%-------~%")
-                              (weir-utils:mac (weir::future ,alt-res ,expr
-                                                            ,name ,ref))))
-            (,accfx (weir::future ,alt-res ,expr ,name ,ref)))))
+         (let ((f `(future ,alt-res ,expr ,name ,ref)))
+           (when db (format t "~%~%------------------~%~%alt: ~a~%--->~%" root)
+                    (pprint (macroexpand-1 `(future ,alt-res ,expr ,name ,ref)))
+                    (format t "~%" root))
+           `(,accfx ,f))))
 
      (-transform-body (root alt-res)
        (declare (symbol alt-res))

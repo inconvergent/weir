@@ -1,4 +1,3 @@
-
 (defpackage #:weir-utils
   (:use #:common-lisp)
   (:export
@@ -13,7 +12,8 @@
    #:define-struct-load-form
    #:ensure-filename
    #:ensure-vector
-   #:terminate
+   #:f?
+   #:i?
    #:internal-path-string
    #:lvextend
    #:mac
@@ -23,10 +23,12 @@
    #:print-every
    #:psymb
    #:string-list-concat
+   #:terminate
    #:to-adjustable-vector
    #:to-list
    #:to-vector
    #:undup
+   #:v?
    #:vector-first
    #:vector-last
    #:vextend
@@ -396,6 +398,8 @@
 (defpackage #:rnd
   (:use #:common-lisp)
   (:export
+    #:3get-acc-sphere-walk
+    #:3get-sphere-walk
     #:3in-box
     #:3in-cube
     #:3in-sphere
@@ -552,8 +556,8 @@
     #:cycle-basis->edge-sets
     #:del
     #:del-simple-filaments
-    #:edge-set->cycle
     #:edge-set->graph
+    #:edge-set->path
     #:edge-set-symdiff
     #:edge-sets->cycle-basis
     #:get-continous-paths
@@ -568,6 +572,7 @@
     #:get-verts
     #:make
     #:mem
+    #:path->edge-set
     #:vmem
     #:with-graph-edges)
   (:import-from #:weir-utils
@@ -704,15 +709,15 @@
     #:*opt-settings*
     #:ensure-filename))
 
-(defpackage :obj
-  (:use :common-lisp)
+(defpackage #:obj
+  (:use #:common-lisp)
   (:export
     #:add-face
     #:add-verts
     #:add-line
     #:make
     #:save)
-  (:import-from :weir-utils
+  (:import-from #:weir-utils
     #:vextend
     #:ensure-filename
     #:make-adjustable-vector
@@ -820,6 +825,7 @@
     #:3add-box!
     #:3add-cube!
     #:3add-path!
+    #:3add-path?
     #:3add-vert!
     #:3add-vert?
     #:3add-verts!
@@ -832,6 +838,8 @@
     #:3get-vert
     #:3get-verts
     #:3grp-transform!
+    #:3gv
+    #:3gvs
     #:3import-verts-grp
     #:3itr-edge-verts
     #:3itr-edge-verts*
@@ -852,21 +860,29 @@
     #:add-edge?
     #:add-edges!
     #:add-grp!
+    #:add-grp?
     #:add-path!
     #:add-path-ind!
+    #:add-path?
     #:add-vert!
     #:add-vert?
     #:add-verts!
+    #:all-grps->main!
     #:append-edge!
     #:append-edge?
     #:build-zonemap
     #:center!
+    #:clear-prop
     #:cut-to-area!
     #:del-edge!
     #:del-edge?
     #:del-grp!
     #:edge-exists
+    #:edge-has-prop
     #:edge-length
+    #:edge-prop-nxt-vert
+    #:edges-with-prop
+    #:edges-with-prop%
     #:exec-alt
     #:export-verts-grp
     #:get-all-grps
@@ -875,10 +891,13 @@
     #:get-alteration-result-map
     #:get-continous-paths
     #:get-cycle-basis
+    #:get-edge-prop
+    #:get-edge-prop%
     #:get-edges
     #:get-grp
+    #:get-grp-as-path
     #:get-grp-num-verts
-    #:get-grp-props
+    #:get-grp-prop
     #:get-grp-verts
     #:get-incident-edges
     #:get-incident-rotated-vert
@@ -890,14 +909,14 @@
     #:get-planar-cycles
     #:get-spanning-tree
     #:get-vert
-    #:get-vert-by-name
-    #:get-vert-ind-by-name
     #:get-vert-inds
-    #:get-vert-inds-by-name
+    #:get-vert-prop
+    #:get-vert-prop%
     #:get-verts
-    #:get-verts-by-name
     #:get-west-most-vert
     #:grp-transform!
+    #:gv
+    #:gvs
     #:import-verts-grp
     #:intersect-all!
     #:is-vert-in-grp
@@ -913,6 +932,8 @@
     #:ldel-edge?
     #:ledge-length
     #:lexec-alt
+    #:lset-edge-prop
+    #:lset-vert-prop
     #:lsplit-edge!
     #:lsplit-edge-ind!
     #:lsplit-edge-ind?
@@ -923,14 +944,22 @@
     #:move-vert?
     #:prune-edges-by-len!
     #:relative-neighborhood!
-    #:set-grp-props!
+    #:set-edge-prop
+    #:set-edge-prop?
+    #:set-grp-prop
+    #:set-grp-prop?
+    #:set-vert-prop
+    #:set-vert-prop?
     #:split-edge!
     #:split-edge-ind!
     #:split-edge-ind?
     #:split-edge?
     #:transform!
     #:vadd-edge?
+    #:vert-has-prop
     #:verts-in-rad
+    #:verts-with-prop
+    #:verts-with-prop%
     #:with
     #:with-rnd-edge
     #:with-rnd-vert

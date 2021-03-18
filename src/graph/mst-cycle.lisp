@@ -106,7 +106,7 @@
     (-do-min-spanning-tree grph q weight edge weightfx)))
 
 
-; CYCLE BASIS
+; CYCLE BASIS (this is pretty bad ...)
 
 (defun -reduce-cycle (edge-sets i weightfx)
   (declare (simple-array edge-sets) (fixnum i) (function weightfx))
@@ -115,8 +115,10 @@
        (intersection curr (aref edge-sets j) :test #'equal))
 
      (-smaller (curr sd)
-       (and (edge-set->cycle sd) (< (-edge-set-weight sd weightfx)
-                                    (-edge-set-weight curr weightfx))))
+       (multiple-value-bind (_ cycle) (edge-set->path sd)
+         (declare (ignore _))
+         (and cycle (< (-edge-set-weight sd weightfx)
+                       (-edge-set-weight curr weightfx)))))
 
      (-search-and-reduce (i)
        (loop with curr = (aref edge-sets i)

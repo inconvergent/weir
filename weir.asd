@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "4.4.0"
+  :version "4.6.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -59,6 +59,7 @@
                (:file "distance/kdtree")
                (:file "weir/weir")
                (:file "weir/weir-macro")
+               (:file "weir/props")
                (:file "weir/weir-with-macro")
                (:file "weir/vert-utils")
                (:file "weir/planar-cycles")

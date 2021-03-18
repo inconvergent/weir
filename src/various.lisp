@@ -9,6 +9,20 @@
 (defconstant PII (the double-float #.(* PI 2d0)))
 (defconstant PI5 (the double-float #.(* PI 0.5d0)))
 
+(defun v? (&optional silent)
+  (if silent (slot-value (asdf:find-system 'weir) 'asdf:version)
+             (format t "~%weir version: ~a~%"
+               (slot-value (asdf:find-system 'weir) 'asdf:version))))
+
+
+(defun f? (f)
+  (declare (symbol f))
+  (format t "~%---~%")
+  (describe f)
+  (format t "~%---~%") )
+
+(defun i? (f) (inspect f))
+
 
 ;http://cl-cookbook.sourceforge.net/os.html
 (defun cmd-args ()
@@ -58,8 +72,7 @@
 
 
 ;from on lisp by pg
-(defmacro mac (expr)
-  `(pprint (macroexpand-1 ',expr)))
+(defmacro mac (expr) `(pprint (macroexpand-1 ',expr)))
 
 
 ;https://gist.github.com/lispm/6ed292af4118077b140df5d1012ca646
@@ -106,11 +119,10 @@
 
 (defun numshow (a &key (ten 6) (prec 6))
   (declare (double-float a))
-  (let ((lim (/ (expt 10d0 ten)))
-        (show (format nil "~~,~af" prec)))
+  (let ((show (format nil "~~,~af" prec)))
     (if (< 1d-6 (the double-float (abs a)) (expt 10 ten))
-    (format nil show a)
-    (format nil "~,1e" a))))
+        (format nil show a)
+        (format nil "~,1e" a))))
 
 
 (abbrev vextend vector-push-extend)
@@ -172,8 +184,7 @@
   (declare (sequence a))
   (coerce a 'list))
 
-(defun undup (e)
-  (delete-duplicates (alexandria:flatten e)))
+(defun undup (e) (delete-duplicates (alexandria:flatten e)))
 
 (defun internal-path-string (path)
   (declare (string path))

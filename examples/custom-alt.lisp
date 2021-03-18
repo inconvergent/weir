@@ -23,15 +23,15 @@
         repeat 100
         do (weir:build-zonemap wer rad)
            (weir:with (wer % :db t)
-             (% (lambda () (print :e)) (:e))
+             (% (lambda () (print :e)) :arg (:e))
              ; the result of this alteration will be available
              ; inside this context as :v
              (% (vert-if-no-collision? curr rad
                   (rnd:in-circ rad
-                    :xy (weir:get-vert wer curr))) :v)
+                    :xy (weir:get-vert wer curr))) :res :v)
              ; this alteration references (:v), and the result will
              ; be avilable as :e (it is used below)
-             (% (weir:add-edge? :v curr) (:v) :e)
+             (% (weir:add-edge? :v curr) :res :e :arg (:v))
 
              ; lambdas are allowed as well.
              ; draw new edge, and update curr.
@@ -40,7 +40,7 @@
              (% (lambda () (progn (setf curr :v)
                                   (draw-svg:path psvg
                                     (weir:get-verts wer :e))))
-                (:v :e)))))
+                :arg (:v :e)))))
 
 
 (defun main (fn)

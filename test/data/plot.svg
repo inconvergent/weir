@@ -4,117 +4,103 @@
 <svg width="1000.00" height="1000.00" version="1.1" id="toplevel"
     xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink">
-  <path d="M1000.00 0
+<path d="M1000.00 0
 L1000.00 1000.00
 L0 1000.00
 L0 0
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="red"
-        stroke-width="1.10"/>
-  <path d="M0 0
+      fill="none" stroke="red" stroke-width="1.10"/>
+<path d="M0 0
 L20.00 0
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="blue"
-        stroke-width="1.10"/>
-  <path d="M1000.00 0
+      fill="none" stroke="blue" stroke-width="1.10"/>
+<path d="M1000.00 0
 L980.00 0
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="blue"
-        stroke-width="1.10"/>
-  <path d="M0 1000.00
+      fill="none" stroke="blue" stroke-width="1.10"/>
+<path d="M0 1000.00
 L20.00 1000.00
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="blue"
-        stroke-width="1.10"/>
-  <path d="M1000.00 1000.00
+      fill="none" stroke="blue" stroke-width="1.10"/>
+<path d="M1000.00 1000.00
 L980.00 1000.00
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="blue"
-        stroke-width="1.10"/>
-  <path d="M100.00 100.00
+      fill="none" stroke="blue" stroke-width="1.10"/>
+<path d="M100.00 100.00
 L200.00 100.00
 L200.00 200.00
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="black"
-        stroke-width="1.10"/>
-  <path d="M300.00 100.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M300.00 100.00
 L400.00 100.00
 L400.00 200.00
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="black"
-        stroke-width="1.10"/>
-  <path d="M500.00 100.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M500.00 100.00
 L600.00 100.00
 L600.00 200.00
 Z
 "
-        fill="none" fill-opacity="1.00" stroke-opacity="1.00" stroke="black"
-        stroke-width="10.00"/>
-  <path d="M700.00 100.00
+      fill="none" stroke="black" stroke-width="10.00"/>
+<path d="M700.00 100.00
 L800.00 100.00
 L800.00 200.00
 Z
 "
-        fill="black" fill-opacity="1.00" stroke-opacity="1.00" stroke="black"
-        stroke-width="1.10"/>
-  <path d="M100.00 300.00
+      fill="black" stroke="black" stroke-width="1.10"/>
+<path d="M100.00 300.00
 Q200.0,300.0 200.0,400.0
 "
-        stroke="black" fill="none" stroke-opacity="1.00" fill-opacity="1.00"
-        stroke-width="1.10"/>
-  <path d="M350.00 350.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M350.00 350.00
 Q300.0,300.0 350.0,300.0
 Q400.0,300.0 400.0,350.0
 Q400.0,400.0 350.0,350.0
 "
-        stroke="black" fill="none" stroke-opacity="1.00" fill-opacity="1.00"
-        stroke-width="1.10"/>
-  <path d="M550.00 350.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M550.00 350.00
 Q500.0,300.0 550.0,300.0
 Q600.0,300.0 600.0,350.0
 Q600.0,400.0 550.0,350.0
 "
-        stroke="black" fill="none" stroke-opacity="1.00" fill-opacity="1.00"
-        stroke-width="10.00"/>
-  <path d="M750.00 350.00
+      fill="none" stroke="black" stroke-width="10.00"/>
+<path d="M750.00 350.00
 Q700.0,300.0 750.0,300.0
 Q800.0,300.0 800.0,350.0
 Q800.0,400.0 750.0,350.0
 "
-        stroke="black" fill="black" stroke-opacity="1.00" fill-opacity="1.00"
+      fill="black" stroke="black" stroke-width="1.10"/>
+<circle cx="100.00" cy="500.00" r="20.00" fill="none" stroke="black"
         stroke-width="1.10"/>
-  <circle cx="100.00" cy="500.00" r="20.00" fill="none" stroke="black"
-          stroke-width="1.10" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <circle cx="200.00" cy="500.00" r="20.00" fill="none" stroke="black"
-          stroke-width="10.00" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <circle cx="300.00" cy="500.00" r="20.00" fill="black" stroke="black"
-          stroke-width="10.00" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <path d="M400.0,500.0 m -20.0,0 a 20.0,20.0 0 1,0 40.0 0 a 20.0,20.0 0 1,0 -40.0 0"
-        fill="none" stroke="black" stroke-width="1.10" fill-opacity="1.00"
-        stroke-opacity="1.00"/>
-  <path d="M 520.0,500.0 A 20.0,20.0 0 0,0 500.0 480.0" fill="none"
-        stroke="black" stroke-width="2.00" stroke-opacity="1.00"/>
-  <circle cx="500.00" cy="500.00" r="15.00" fill="none" stroke="black"
-          stroke-width="1.10" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <path d="M 580.0,500.0 A 20.0,20.0 0 1,0 546.9271275827277 515.1360499061585"
-        fill="none" stroke="black" stroke-width="3.00" stroke-opacity="1.00"/>
-  <circle cx="560.00" cy="500.00" r="15.00" fill="none" stroke="black"
-          stroke-width="1.10" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <path d="M 637.5516512378075,490.4114892279159 A 20.0,20.0 0 0,0 630.8060461173628 483.1705803038421"
-        fill="none" stroke="black" stroke-width="4.00" stroke-opacity="1.00"/>
-  <circle cx="620.00" cy="500.00" r="15.00" fill="none" stroke="black"
-          stroke-width="1.10" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <path d="M 680.6640361484108,505.1108220405366 A 20.0,20.0 0 0,0 705.6732437092645 519.1784854932628"
-        fill="none" stroke="black" stroke-width="5.00" stroke-opacity="1.00"/>
-  <circle cx="700.00" cy="500.00" r="15.00" fill="none" stroke="black"
-          stroke-width="1.10" fill-opacity="1.00" stroke-opacity="1.00"/>
-  <path d="M800.0,500.0 m -0.1,0 a 0.1,0.1 0 1,0 0.2 0 a 0.1,0.1 0 1,0 -0.2 0
+<circle cx="200.00" cy="500.00" r="20.00" fill="none" stroke="black"
+        stroke-width="10.00"/>
+<circle cx="300.00" cy="500.00" r="20.00" fill="black" stroke="black"
+        stroke-width="10.00"/>
+<path d="M400.0,500.0 m -20.0,0 a 20.0,20.0 0 1,0 40.0 0 a 20.0,20.0 0 1,0 -40.0 0"
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M 520.0,500.0 A 20.0,20.0 0 0,0 500.0 480.0" fill="none"
+      stroke="black" stroke-width="2.00"/>
+<circle cx="500.00" cy="500.00" r="15.00" fill="none" stroke="black"
+        stroke-width="1.10"/>
+<path d="M 580.0,500.0 A 20.0,20.0 0 1,0 546.9271275827277 515.1360499061585"
+      fill="none" stroke="black" stroke-width="3.00"/>
+<circle cx="560.00" cy="500.00" r="15.00" fill="none" stroke="black"
+        stroke-width="1.10"/>
+<path d="M 637.5516512378075,490.4114892279159 A 20.0,20.0 0 0,0 630.8060461173628 483.1705803038421"
+      fill="none" stroke="black" stroke-width="4.00"/>
+<circle cx="620.00" cy="500.00" r="15.00" fill="none" stroke="black"
+        stroke-width="1.10"/>
+<path d="M 680.6640361484108,505.1108220405366 A 20.0,20.0 0 0,0 705.6732437092645 519.1784854932628"
+      fill="none" stroke="black" stroke-width="5.00"/>
+<circle cx="700.00" cy="500.00" r="15.00" fill="none" stroke="black"
+        stroke-width="1.10"/>
+<path d="M800.0,500.0 m -0.1,0 a 0.1,0.1 0 1,0 0.2 0 a 0.1,0.1 0 1,0 -0.2 0
 M800.0,500.0 m -1.59,0 a 1.59,1.59 0 1,0 3.18 0 a 1.59,1.59 0 1,0 -3.18 0
 M800.0,500.0 m -3.08,0 a 3.08,3.08 0 1,0 6.16 0 a 3.08,3.08 0 1,0 -6.16 0
 M800.0,500.0 m -4.569999999999999,0 a 4.569999999999999,4.569999999999999 0 1,0 9.139999999999999 0 a 4.569999999999999,4.569999999999999 0 1,0 -9.139999999999999 0
@@ -126,14 +112,14 @@ M800.0,500.0 m -12.02,0 a 12.02,12.02 0 1,0 24.04 0 a 12.02,12.02 0 1,0 -24.04 0
 M800.0,500.0 m -13.51,0 a 13.51,13.51 0 1,0 27.02 0 a 13.51,13.51 0 1,0 -27.02 0
 M800.0,500.0 m -15.0,0 a 15.0,15.0 0 1,0 30.0 0 a 15.0,15.0 0 1,0 -30.0 0
 "
-        fill="none" stroke="black" stroke-width="1.10" stroke-opacity="1.00"/>
-  <path d="M850.0,500.0 m -15.0,0 a 15.0,15.0 0 1,0 30.0 0 a 15.0,15.0 0 1,0 -30.0 0
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M850.0,500.0 m -15.0,0 a 15.0,15.0 0 1,0 30.0 0 a 15.0,15.0 0 1,0 -30.0 0
 M850.0,500.0 m -16.666666666666668,0 a 16.666666666666668,16.666666666666668 0 1,0 33.333333333333336 0 a 16.666666666666668,16.666666666666668 0 1,0 -33.333333333333336 0
 M850.0,500.0 m -18.333333333333332,0 a 18.333333333333332,18.333333333333332 0 1,0 36.666666666666664 0 a 18.333333333333332,18.333333333333332 0 1,0 -36.666666666666664 0
 M850.0,500.0 m -20.0,0 a 20.0,20.0 0 1,0 40.0 0 a 20.0,20.0 0 1,0 -40.0 0
 "
-        fill="none" stroke="black" stroke-width="1.10" stroke-opacity="1.00"/>
-  <path d="M100.00 700.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M100.00 700.00
 L100.00 705.00
 L200.00 705.00
 L200.00 702.50
@@ -158,8 +144,8 @@ L205.00 700.00
 L205.00 800.00
 L200.00 800.00
 "
-        stroke="black" fill="none" stroke-opacity="1.00" stroke-width="1.10"/>
-  <path d="M300.00 705.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M300.00 705.00
 L400.00 705.00
 L400.00 702.50
 L300.00 702.50
@@ -180,8 +166,8 @@ L402.50 700.00
 L405.00 700.00
 L405.00 800.00
 "
-        stroke="black" fill="none" stroke-opacity="1.00" stroke-width="1.10"/>
-  <path d="M500.00 705.00
+      fill="none" stroke="black" stroke-width="1.10"/>
+<path d="M500.00 705.00
 L600.00 705.00
 L600.00 702.50
 L500.00 702.50
@@ -202,5 +188,5 @@ L602.50 700.00
 L605.00 700.00
 L605.00 800.00
 "
-        stroke="black" fill="none" stroke-opacity="1.00" stroke-width="1.10"/>
+      fill="none" stroke="black" stroke-width="1.10"/>
 </svg>

@@ -12,6 +12,7 @@
   (alt-res (make-hash-table :test #'equal :size 20 :rehash-size 2f0))
   (dim 2 :type pos-int :read-only t)
   (grps (make-hash-table :test #'equal :size 20 :rehash-size 2f0))
+  (props (make-hash-table :test #'equal :size 500 :rehash-size 2f0))
   (max-verts 5000 :type pos-int :read-only t)
   (num-verts 0 :type pos-int)
   (set-size 5 :type pos-int :read-only t)
@@ -24,8 +25,7 @@
 (defstruct (grp (:constructor -make-grp))
   (name nil :type symbol :read-only t)
   (grph nil :type graph::graph)
-  (type nil :type symbol :read-only t)
-  (props nil))
+  (type nil :type symbol :read-only t))
 
 
 (declaim (inline -exec-alt))
@@ -42,8 +42,6 @@
   (declare #.*opt-settings* (weir wer))
   (if collect (loop for x in alts collect (-exec-alt wer x))
               (loop for x in alts do (-exec-alt wer x))))
-
-
 
 
 (defun -make-hash-table (&key init (test #'equal))
@@ -81,8 +79,9 @@
                                                       :set-size set-size)))))))
 
 
-(defun add-grp! (wer &key type name props
+(defun add-grp! (wer &key type name
                      &aux (name* (if name name (gensym "grp"))))
+  (declare #.*opt-settings* (weir wer))
   "
   constructor for grp instances.
 
@@ -103,7 +102,6 @@
 
   the grp functionality is somewhat experimental.
   "
-  (declare #.*opt-settings* (weir wer))
   (with-struct (weir- grps adj-size set-size) wer
     (multiple-value-bind (v exists) (gethash name* grps)
       (declare (ignore v) (boolean exists))
@@ -112,8 +110,7 @@
                                  :name name*
                                  :type type
                                  :grph (graph:make :adj-size adj-size
-                                                   :set-size set-size)
-                                 :props props)))
+                                                   :set-size set-size))))
   name*)
 
 (defun del-grp! (wer &key g)
@@ -122,8 +119,8 @@
 
 
 (defmacro with-grp ((wer g* g) &body body)
-  "select grp g from weir instance. g will be available in this context as g*"
   (declare (symbol wer))
+  "select grp g from weir instance. g will be available in this context as g*"
   (alexandria:with-gensyms (grps exists gname wname)
     `(let ((,wname ,wer)
            (,gname ,g))
@@ -154,27 +151,17 @@
             if (< -1 ,v ,num*) collect (progn ,@body)))))
 
 
-(defun get-grp-props (wer &key g)
-  (declare #.*opt-settings* (weir wer))
-  (grp-props (get-grp wer :g g)))
-
-
-(defun set-grp-props! (wer v &key g)
-  (declare #.*opt-settings* (weir wer))
-  (setf (grp-props (get-grp wer :g g)) v))
-
-
 (defun get-all-grps (wer &key main)
-  "returns all grps. use :main t to include main/nil grp"
   (declare #.*opt-settings* (weir wer) (boolean main))
+  "returns all grps. use :main t to include main/nil grp"
   (loop for g being the hash-keys of (weir-grps wer)
         ; ignores nil (main) grp, unless overridden with :main t
         if (or g main) collect g))
 
 
 (defun get-grp (wer &key g)
-  "returns the grp g. if g is not provided, the main/nil grp will be returned"
   (declare #.*opt-settings* (weir wer))
+  "returns the grp g. if g is not provided, the main/nil grp will be returned"
   (gethash g (weir-grps wer)))
 
 
@@ -193,6 +180,11 @@
   (declare #.*opt-settings* (weir wer))
   (with-grp (wer g* g)
     (graph:get-edges (grp-grph g*))))
+
+(defun get-grp-as-path (wer &key g)
+  (declare #.*opt-settings* (weir wer))
+  "returns (values path cycle?)"
+  (graph:edge-set->path (weir:get-edges wer :g g)))
 
 
 ; TODO: get-all-incident-edges (not just in grp g)?
@@ -294,4 +286,9 @@
         and b of-type pos-int in
           (funcall (the function (if closed #'-roll-once #'cdr)) vv)
         collect (add-edge! wer a b :g g)))
+
+(weir-utils:abbrev gvs get-verts)
+(weir-utils:abbrev gv get-vert)
+(weir-utils:abbrev 3gvs 3get-verts)
+(weir-utils:abbrev 3gv 3get-vert)
 

@@ -54,9 +54,7 @@
 
 (defun intersect-all! (wer &key g)
   (declare (weir wer))
-  "
-  inserts new vertices wherever any two lines intersect.
-  "
+  "inserts new vertices wherever any two lines intersect."
   (-dimtest wer)
   (loop with edges = (get-edges wer :g g)
         with edge = (pop edges)

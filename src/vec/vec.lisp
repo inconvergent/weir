@@ -380,6 +380,11 @@
 (declaim (inline segx))
 (defun segx (aa bb)
   (declare #.*opt-settings* (list aa bb))
+  "
+  find intersection between lines aa, bb.
+  returns isect? p q where p and q is the distance along each line to the
+  intersection point
+  "
   (destructuring-bind (a1 a2) aa
     (declare (vec a1 a2))
     (destructuring-bind (b1 b2) bb

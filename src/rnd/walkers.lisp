@@ -43,3 +43,19 @@
   (lambda (s) (declare (double-float s))
     (setf xy (vec:add xy (setf a (vec:add a (in-circ s)))))))
 
+
+; 3D
+
+(defun 3get-sphere-walk (&key (xy vec:*3zero*))
+  (declare #.*opt-settings* (vec:3vec xy))
+  "random 3d walker"
+  (lambda (s) (declare (double-float s))
+    (setf xy (vec:3add xy (3in-sphere :rad s)))))
+
+
+(defun 3get-acc-sphere-walk (&key (xy vec:*3zero*) (a vec:*3zero*))
+  (declare #.*opt-settings* (vec:3vec xy a))
+  "random accelerated 3d walker"
+  (lambda (s) (declare (double-float s))
+    (setf xy (vec:3add xy (setf a (vec:3add a (3in-sphere :rad s)))))))
+

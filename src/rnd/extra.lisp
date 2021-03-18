@@ -50,10 +50,18 @@
 
 ; some version of mitchell's best candidate algorithm
 ; https://bl.ocks.org/mbostock/1893974/c5a39633db9c8b1f12c73b069e002c388d4cb9bf
-(defun max-distance-sample (n fx &key (sample-num 50)
-                                      (res (weir-utils:make-adjustable-vector))
-                                      (dstfx #'vec:dst2))
-  (declare (fixnum n sample-num) (array res) (function fx dstfx))
+; TODO: make n the max number instead of the new sample number
+(defun max-distance-sample (n fx &key (sample-num 50) (dstfx #'vec:dst2)
+                                      (res (weir-utils:make-adjustable-vector)))
+  (declare (fixnum n sample-num) (function fx dstfx) (array res))
+  "
+  randomly sample a total of n items using (funcall fx sample-num), selecting
+  the element furthest from existing elemets.
+  example:
+
+    (rnd:max-distance-sample 100
+      (lambda (g) (rnd:nin-circ g 400d0)))
+  "
   (labels ((-get-cand (c) (second (first c)))
            (-closest (res* c) (loop for v across res*
                                     minimizing (funcall dstfx v c))))

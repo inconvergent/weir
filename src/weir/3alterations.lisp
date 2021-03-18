@@ -72,6 +72,12 @@
     (del-edge? a b :g g)))
 
 
+(declaim (inline 3add-path?))
+(defun 3add-path? (points &key g closed)
+  (declare (list points) (boolean closed))
+  (lambda (wer) (3add-path! wer points :g g :closed closed)))
+
+
 (declaim (inline 3split-edge?))
 (defun 3split-edge? (v w &key xy g)
   "
