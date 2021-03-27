@@ -14,11 +14,11 @@
 
 (defun get-alteration-result-list (wer &key (all t))
   (declare #.*opt-settings* (weir wer) (boolean all))
-  "returns list with tuples of alteration name and corresponding result."
+  "returns alist with tuples of alteration name and corresponding result."
   (loop for k being the hash-keys of (weir-alt-res wer)
           using (hash-value v)
         if (or all (and (not all) v))
-        collect (list k v)))
+        collect `(,k . ,v)))
 
 (defun get-alteration-result-map (wer)
   (declare #.*opt-settings* (weir wer))
@@ -50,8 +50,8 @@
             (declare (function fx))
             (multiple-value-bind (is-resolved _)
               (handler-case (funcall fx wer)
-                 (error (ename) (format t *errormsg* fx ename)
-                                (weir-utils::terminate 666)))
+                 (error (err) (format t *errormsg* fx err)
+                              (weir-utils::terminate 666)))
               (declare (ignore _) (boolean is-resolved))
               is-resolved)))
     (loop while fxs do (setf fxs (remove-if #'-is-resolved fxs)))))
@@ -68,8 +68,7 @@
 
   any function call that contains a ref will be left as is.
 
-  any symbol that is a ref (:keyword), or an argument to the lambda, will be
-  left as is.
+  any symbol that is a ref or an argument to the lambda will be left as is.
   "
   (let ((gslst (list)))
     (labels
@@ -127,6 +126,7 @@
               gslst))))
 
 
+(defun -valid-ref (v) (or (keywordp v) (symbolp v)))
 
 (defmacro future (alt-res expr name ref)
   (declare (symbol alt-res) (list expr))
@@ -135,9 +135,9 @@
 
   (unless (or (not ref) (listp ref))
           (error "ref must be a list or nil, got ~a" ref))
-  (unless (every (lambda (r) (atom r)) ref)
+  (unless (every #'-valid-ref ref)
           (error "all refs must be variable/keyword/symbol or nil, got ~a" ref))
-  (when (and name (not (atom name)))
+  (when (and name (not (-valid-ref name)))
         (error "res must be variable/keyword/symbol or nil, got: ~a" name))
 
   (labels
@@ -162,7 +162,7 @@
 
     (alexandria:with-gensyms (wname)
       (multiple-value-bind (expr-gs gs->arg) (_args->gensyms expr ref)
-        (if ref ; expr depends on future result
+        (if ref ; expr has futures
             (-let-over-lambda gs->arg
               `(lambda (,wname)
                  (case (-if-all-resolved ,alt-res (list ,@ref))
@@ -170,7 +170,7 @@
                                          (-subst-all-refs expr-gs ref alt-res))))
                        (:bail (values t ,(-set-bail)))
                        (:wait (values nil nil)))))
-            ; expr has no future dependencies
+            ; expr has no futures
             (-let-over-lambda gs->arg
               `(lambda (,wname)
                  (values t ,(-call-fx wname expr-gs)))))))))
@@ -209,10 +209,10 @@
                     (cons (-transform-body (car root) alt-res)
                           (-transform-body (cdr root) alt-res)))))))
 
-    (alexandria:with-gensyms (wname x alts alt-res clear-alt-res)
+    (alexandria:with-gensyms (wname x alts alt-res clear-alt-res with-res)
       (let ((new-body (handler-case (-transform-body body alt-res)
-                                    (error (ename)
-                                      (format t *with-errormsg* "transform" ename)))))
+                                    (error (ename) (format t *with-errormsg*
+                                                           "transform" ename)))))
         `(let* ((,wname ,wer)
                 (,alts (list))
                 (,alt-res (weir-alt-res ,wname)))
@@ -226,9 +226,10 @@
            (,clear-alt-res)
 
            (handler-case
-             (progn ,@new-body)
+             ; ensure that body returns the final form, unless error
+             (let ((,with-res (progn ,@new-body)))
+               (-resolve-all ,alts ,wname)
+               ,with-res)
              (error (ename) (format t *with-errormsg* "macro" ename)
-                            (weir-utils::terminate 667)))
-
-           (-resolve-all ,alts ,wname)))))))
+                            (weir-utils::terminate 667)))))))))
 

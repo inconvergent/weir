@@ -46,7 +46,7 @@
 (defun lset-vert-prop (wer verts prop &optional (val t))
   (declare #.*opt-settings* (weir wer) (list verts) (symbol prop))
   "set prop of verts"
-  (loop for v of-type fixnum in verts
+  (loop for v of-type fixnum in (remove-duplicates (alexandria:flatten verts))
         do (set-vert-prop wer v prop val)))
 
 

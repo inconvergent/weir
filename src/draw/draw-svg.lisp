@@ -54,28 +54,30 @@
                (:a2-landscape (list *long* *short*))
                (:a2-portrait (list *short* *long*))))
 
-(defun make (&key (layout :a4-landscape) stroke
-                  (stroke-width 1.1d0) (rep-scale 1d0)
-                  fill-opacity stroke-opacity)
+(defun -select-arg (l) (find-if #'identity l))
+
+(defun make (&key (layout :a4-landscape) stroke stroke-width rep-scale
+                  fill-opacity stroke-opacity so rs fo sw)
   (destructuring-bind (width height) (-get-width-height layout)
     (make-draw-svg :layout layout
                    :height height :width width
-                   :rep-scale rep-scale
                    :stroke (-coerce-hex (if stroke stroke "black"))
-                   :stroke-width stroke-width
+                   :fill-opacity (-select-arg (list fill-opacity fo))
+                   :rep-scale (-select-arg (list rep-scale rs 0.5d0))
+                   :stroke-opacity (-select-arg (list stroke-opacity so))
+                   :stroke-width (-select-arg (list stroke-width sw 1.1d0))
                    :scene (-get-scene layout))))
 
 
-(defun make* (&key (height 1000d0) (width 1000d0) stroke
-                   (stroke-width 1.1d0) (rep-scale 1d0)
-                   fill-opacity stroke-opacity)
+(defun make* (&key (height 1000d0) (width 1000d0) stroke stroke-width rep-scale
+                   fill-opacity stroke-opacity so rs fo sw)
   (make-draw-svg :layout 'custom
-                 :fill-opacity fill-opacity
                  :height height :width width
-                 :rep-scale rep-scale
                  :stroke (-coerce-hex (if stroke stroke "black"))
-                 :stroke-opacity stroke-opacity
-                 :stroke-width stroke-width
+                 :fill-opacity (-select-arg (list fill-opacity fo))
+                 :rep-scale (-select-arg (list rep-scale rs 0.5d0))
+                 :stroke-opacity (-select-arg (list stroke-opacity so))
+                 :stroke-width (-select-arg (list stroke-width sw 1.1d0))
                  :scene (cl-svg:make-svg-toplevel *svg*
                           :height height :width width)))
 

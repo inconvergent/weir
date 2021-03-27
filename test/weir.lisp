@@ -216,7 +216,7 @@
       (% (weir:append-edge? (first :e1) (vec:vec 4d0 3d0)) :res :e2 :arg (:e1)))
 
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             '((:A 1) (:B 0) (:E1 (0 1)) (:E2 2))))
+             '((:A . 1) (:B . 0) (:E1 0 1) (:E2 . 2))))
 
   (let ((wer (weir:make)))
     (let ((v (vec:vec 1d0 2d0)))
@@ -293,7 +293,7 @@
        (% (weir:add-vert? (vec:vec 80d0 3d0)) :res :a)
        (% (weir:add-vert? (vec:vec 70d0 3d0)) :res :b))
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             `((:a 13) (:b 12)))
+             `((:a . 13) (:b . 12)))
 
     (do-test (weir:get-num-verts wer) 14)
 
@@ -311,8 +311,8 @@
       (% (weir:move-vert? 3 (vec:vec 2d0 3d0) :rel nil) :res :c)
       (% (weir:move-vert? 2 (vec:vec 3d0 4d0)) :res :d))
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             `((:a #s(vec:vec :x 3.0d0 :y 5.0d0)) (:b #s(vec:vec :x 3.0d0 :y 6.0d0))
-               (:c #s(vec:vec :x 2.0d0 :y 3.0d0)) (:d #s(vec:vec :x 6.0d0 :y 8.0d0))))
+             `((:a . #s(vec:vec :x 3.0d0 :y 5.0d0)) (:b . #s(vec:vec :x 3.0d0 :y 6.0d0))
+               (:c . #s(vec:vec :x 2.0d0 :y 3.0d0)) (:d . #s(vec:vec :x 6.0d0 :y 8.0d0))))
 
     (do-test (weir:get-vert wer 0) (vec:vec 3d0 5d0))
 
@@ -336,7 +336,7 @@
     (% (weir:add-edge? 1 6) :res :b)
     (% (weir:add-edge? 1 100) :res :c))
   (do-test (sort-a-list (weir:get-alteration-result-list wer))
-           '((:a nil) (:b (1 6)) (:c nil)))))
+           '((:a) (:b 1 6) (:c)))))
 
 
 (defun test-weir-append ()
@@ -350,7 +350,7 @@
       (% (weir:append-edge? 7 (vec:vec 1d0 2d0)) :res :c))
 
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             '((:a 13) (:b 12) (:c 11)))
+             '((:a . 13) (:b . 12) (:c . 11)))
 
     (do-test (weir:get-num-edges wer) 8)
 
@@ -371,7 +371,7 @@
       (% (weir:lsplit-edge? '(1 2) :xy (vec:vec 31d0 23d0)) :res :b)
       (% (weir:lsplit-edge? '(5 6) :xy (vec:vec 32d0 24d0)) :res :c))
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             '((:a nil) (:b 12) (:c 11)))
+             '((:a) (:b . 12) (:c . 11)))
 
   (do-test (weir:get-num-edges wer) 7)
 

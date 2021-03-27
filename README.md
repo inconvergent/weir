@@ -54,7 +54,7 @@ Main components:
    ; find the position s between a and b. s should be between 0 and 1
    (vec:on-line s va vb)
    ; find intersection of two lines, returns
-   a bool, and interpolation value along line 1, line 2
+   ; a bool, and interpolation value along line 1, line 2
    (vec:segx line1 line2)
    ```
    See the code in the package for more details.
@@ -298,7 +298,7 @@ Here is a an example of use:
 
 The important thing to note here is that it is _crucial_ that the
 length of edge `(v w)` is calculated outside `(defun prob-add-edge? ...)`.
-This ensure that ` (weir:edge-length wer v w)` is the length of the edge
+This ensure that `(weir:edge-length wer v w)` is the length of the edge
 _before_ the calls to `(move-vert? ...)` have a chance to move either `v` or
 `w`.
 
@@ -327,7 +327,7 @@ As an example of what happes, consider the alteration:
 (% (my-alteration? (first var-1)
                    :a
                    (my-function (rnd:rnd) :b (second var-2)))
-   (:a :b))
+   :arg (:a :b))
 ```
 
 This will be expanded by the macro to something similar to:
@@ -372,7 +372,8 @@ a bit more careful consideration. Here is an example:
                           (g (gensym "g"))) ; create a distinct name
                       (% (weir:add-grp? :name (gensym "line")) :res g)
                       (% (weir:add-path? (list (vec:sub xy s) (vec:add xy s))
-                         :g g) :arg (g))))))
+                                         :g g)
+                         :arg (g))))))
 ```
 
 The second alteration will be expanded to:
@@ -401,8 +402,8 @@ custom alterations and references in `examples/custom-alt.lisp`.
 
 ### Final Note
 
-In the previous implementations of the `(weir:with ...)` context, (% ...) was a
-function. This ensured that the arguments to the alteration, and indeed the
+In the previous implementations of the `(weir:with ...)` context, `(% ...)` was
+a function. This ensured that the arguments to the alteration, and indeed the
 lambda inside the alteration, was created before the end of the context. This
 eradicated the need for these complex shadowing rules. I'm not currently sure
 whether it is possible to avoid shadowing as long as some arguments do not

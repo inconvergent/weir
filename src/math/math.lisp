@@ -18,6 +18,11 @@
   (declare #.*opt-settings* (list p))
   (append p (list (nth 0 p))))
 
+;(declaim (inline last*))
+;(defun last* (l)
+;  (declare #.*opt-settings* (list l))
+;  (first (last l)))
+
 
 ; RANGES
 

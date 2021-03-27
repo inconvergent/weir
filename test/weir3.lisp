@@ -80,7 +80,7 @@
       (% (weir:3lsplit-edge? '(2 1) :xy (vec:3vec 32d0 24d0 5d0)) :res :c))
 
     (do-test (sort-a-list (weir:get-alteration-result-list wer))
-             '((:a 4) (:b nil) (:c 3)))
+             '((:a . 4) (:b) (:c . 3)))
 
     (do-test (weir:3get-vert wer 3) (vec:3vec 32d0 24d0 5d0))))
 
