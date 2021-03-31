@@ -83,11 +83,12 @@
                      do (-update-descendant v w (funcall weightfx v w))))))
   (values mst c))
 
-(defun -init-hash-table (ht v)
-  (declare (hash-table ht))
-  (loop for k of-type fixnum being the hash-keys of ht
-        do (setf (gethash k ht) v))
-  ht)
+(defun -init-hash-table (keys v)
+  (declare (list keys))
+  (loop with res of-type hash-table = (make-hash-table :test #'eql)
+        for k of-type fixnum in keys
+        do (setf (gethash k res) v)
+        finally (return res)))
 
 (defun get-min-spanning-tree (grph &key (weightfx (lambda (a b)
                                                     (declare (ignore a b)) 1d0))
@@ -98,10 +99,10 @@
   "
   ; TODO: what happens if grph is disjoint?
   (declare (graph grph) (fixnum start) (function weightfx))
-  (let* ((verts (graph-verts grph))
-         (weight (-init-hash-table (hset:copy verts) *inf*)) ; ht
-         (edge (-init-hash-table (hset:copy verts) nil)) ; ht
-         (q (hset:copy verts))) ; hset: verts not in tree
+  (let* ((verts (get-verts grph))
+         (weight (-init-hash-table verts *inf*)) ; ht
+         (edge (-init-hash-table verts nil)) ; ht
+         (q (-init-hash-table verts t))) ; hset: verts not in tree
     (when start (setf (gethash start weight) 0d0))
     (-do-min-spanning-tree grph q weight edge weightfx)))
 

@@ -16,7 +16,7 @@
   recursively remove all simple filament edges until there are none left
   "
   (loop until (notany #'identity
-                      (loop for v in (hset:to-list (graph-verts grph))
+                      (loop for v in (get-verts grph)
                             collect (-del-filament grph v))))
   grph)
 

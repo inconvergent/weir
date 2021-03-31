@@ -39,28 +39,78 @@
 
 ; INTERSECTS
 
-(defun -do-intersects (wer split-edge &key g (tol 0.000001d0)
-                                      &aux (line (get-verts wer split-edge)))
-  (declare (weir wer) (list split-edge line))
-  (itr-edges (wer e :g g)
-    (when (< (length (intersection split-edge e)) 1)
-          (multiple-value-bind (x s) (vec:segx line (get-verts wer e))
-            (when (and x (< tol s (- 1d0 tol)))
-                  (multiple-value-bind (anv ane)
-                    (lsplit-edge! wer e :xy (vec:lon-line s line) :g g)
-                    (return-from -do-intersects
-                      (concatenate 'list ane
-                        (lsplit-edge-ind! wer split-edge :via anv :g g)))))))))
+(deftype array-list () `(simple-array list))
 
 (defun intersect-all! (wer &key g)
-  (declare (weir wer))
-  "inserts new vertices wherever any two lines intersect."
+  (declare #.*opt-settings* (weir wer))
   (-dimtest wer)
-  (loop with edges = (get-edges wer :g g)
-        with edge = (pop edges)
-        while edge
-        do (when (and edge (edge-exists wer edge :g g))
-                 (let ((res (-do-intersects wer edge)))
-                   (when res (setf edges (concatenate 'list edges res)))))
-           (setf edge (pop edges))))
+
+  (let ((crossing->vert (make-hash-table :test #'equal)))
+    (declare (hash-table crossing->vert))
+
+    (labels
+      ((-ic (i c) (declare (fixnum i c)) (if (< i c) (list i c) (list c i)))
+
+       (-add (line i hits)
+         (declare (list line hits) (fixnum i))
+         (loop for (c . p) in hits
+               if (not (gethash (the list (-ic i c)) crossing->vert))
+               do (setf (gethash (the list (-ic i c)) crossing->vert)
+                        (add-vert! wer (vec:lon-line p line)))))
+
+       (-add-new-verts (edges isects)
+         (declare (array-list edges isects))
+         (loop for hits across isects
+               for i of-type fixnum from 0
+               if hits
+               do (-add (gvs wer (aref edges i)) i hits)))
+
+       (-edges-as-lines (edges)
+         (declare (array-list edges))
+         (loop for edge of-type list across edges
+               collect (gvs wer edge)))
+
+       (-del-hit-edges (edges isects g)
+         (declare (array-list edges isects))
+         (loop for hits of-type list across isects
+               for i of-type fixnum from 0
+               if hits
+               do (ldel-edge! wer (aref edges i) :g g)
+                  (loop for (c . p) in hits
+                        do (ldel-edge! wer (aref edges c) :g g))))
+
+       (-sort-hits (isects)
+         (loop for i of-type fixnum from 0 below (length isects)
+               if (aref isects i)
+               do (setf (aref isects i) (sort (aref isects i) #'< :key #'cdr)))
+         isects)
+
+       (-add-new-edges (edges isects g)
+         (declare (array-list edges isects))
+         (loop for hits of-type list across isects
+               for i of-type fixnum from 0
+               if hits
+               do (loop with cc = (math:lpos hits)
+                        for a of-type fixnum in cc
+                        and b of-type fixnum in (cdr cc)
+                        initially
+                          (add-edge! wer
+                            (gethash (-ic i (first cc)) crossing->vert)
+                            (first (aref edges i)) :g g)
+                          (add-edge! wer
+                            (gethash (-ic i (last* cc)) crossing->vert)
+                            (last* (aref edges i)) :g g)
+                        do (add-edge! wer
+                             (gethash (-ic i a) crossing->vert)
+                             (gethash (-ic i b) crossing->vert) :g g)))))
+
+      (let* ((edges (to-vector (get-edges wer :g g)))
+             (lines (to-vector (-edges-as-lines edges)))
+             (isects (-sort-hits (vec:lsegx lines))))
+        (declare (array-list isects edges lines))
+        (-del-hit-edges edges isects g)
+        (-add-new-verts edges isects)
+        (-add-new-edges edges isects g))))
+  nil)
+
 

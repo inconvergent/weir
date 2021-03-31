@@ -194,7 +194,7 @@
          (let ((f `(future ,alt-res ,expr ,name ,ref)))
            (when db (format t "~%~%------------------~%~%alt: ~a~%--->~%" root)
                     (pprint (macroexpand-1 `(future ,alt-res ,expr ,name ,ref)))
-                    (format t "~%" root))
+                    (format t "~%~a~%" root))
            `(,accfx ,f))))
 
      (-transform-body (root alt-res)

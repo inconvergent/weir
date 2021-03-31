@@ -7,19 +7,10 @@ fixnum set
 this is a naive wrapper around hash-map. not sure how efficient it will be?
 "
 
-
-(defun make (&key init (size 100) (inc 2f0))
-  (declare #.*opt-settings* (fixnum size))
-  (let ((s (make-hash-table :test #'eql :size size :rehash-size inc)))
-    (when init (add* s init))
-    s))
-
-
 (defun copy (s &key (size 100) (inc 2f0))
   (declare #.*opt-settings* (fixnum size))
   (let ((ns (make-hash-table :test #'eql :size size :rehash-size inc)))
-    (loop for k being the hash-keys of s
-          do (setf (gethash k ns) t))
+    (loop for k being the hash-keys of s do (setf (gethash k ns) t))
     ns))
 
 
@@ -30,12 +21,18 @@ this is a naive wrapper around hash-map. not sure how efficient it will be?
     (declare (ignore val))
     (if exists nil (setf (gethash e s) t))))
 
-
 (defun add* (s ee)
   (declare #.*opt-settings* (hash-table s) (sequence ee))
   (if (equal (type-of ee) 'cons)
       (loop for e of-type fixnum in ee collect (add s e))
       (loop for e of-type fixnum across ee collect (add s e))))
+
+
+(defun make (&key init (size 100) (inc 2f0))
+  (declare #.*opt-settings* (fixnum size))
+  (let ((s (make-hash-table :test #'eql :size size :rehash-size inc)))
+    (when init (add* s init))
+    s))
 
 
 (defun del (s e)

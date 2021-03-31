@@ -196,6 +196,7 @@
     #:lon-line*
     #:lrot
     #:lround
+    #:lsegx
     #:lsmult!*
     #:lsmult*
     #:lsub
@@ -336,6 +337,7 @@
     #:argmin
     #:clamp
     #:close-path
+    #:close-path*
     #:copy-sort
     #:dadd
     #:ddiv
@@ -347,11 +349,13 @@
     #:dsum
     #:imod
     #:integer-search
+    #:last*
     #:lerp
     #:lget
     #:line-from
     #:linspace
     #:list>than
+    #:ll-transpose
     #:llerp
     #:lpos
     #:mid-rad
@@ -933,7 +937,9 @@
     #:ledge-length
     #:lexec-alt
     #:lset-edge-prop
+    #:lset-edge-prop?
     #:lset-vert-prop
+    #:lset-vert-prop?
     #:lsplit-edge!
     #:lsplit-edge-ind!
     #:lsplit-edge-ind?
@@ -970,5 +976,7 @@
     #:to-list
     #:to-vector
     #:vextend
-    #:with-struct))
+    #:with-struct)
+  (:import-from #:math
+    #:last*))
 

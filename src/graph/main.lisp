@@ -17,7 +17,6 @@ a simple (undirected) graph structure based on adjacency lists.
   (size 0 :type pos-int :read-only t)
   (num-edges 0 :type pos-int)
   (adj nil :type hash-table)
-  (verts nil :type hash-table)
   (make-hset #'identity :type function :read-only t))
 
 
@@ -27,7 +26,6 @@ a simple (undirected) graph structure based on adjacency lists.
   (-make-graph :num-edges 0
                :adj (make-hash-table :test #'eql :size adj-size
                                      :rehash-size adj-inc)
-               :verts (hset:make :size set-size :inc set-inc)
                :make-hset (lambda (x) (declare (inline))
                             (hset:make :init x :size set-size :inc set-inc))))
 
@@ -39,7 +37,6 @@ a simple (undirected) graph structure based on adjacency lists.
   (-make-graph :num-edges (graph-num-edges grph)
                :adj (alexandria:copy-hash-table (graph-adj grph)
                       :key #'hset:copy)
-               :verts (hset:copy (graph-verts grph))
                :make-hset (graph-make-hset grph)))
 
 
@@ -56,10 +53,9 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun add (grph a b)
   (declare #.*opt-settings* (graph grph) (pos-int a b))
-  (with-struct (graph- adj make-hset verts) grph
+  (with-struct (graph- adj make-hset) grph
     (declare (function make-hset))
-    (if (progn (hset:add* verts (list a b))
-               (reduce (lambda (x y) (or x y))
+    (if (progn (reduce (lambda (x y) (or x y))
                        (list (-add make-hset adj a b)
                              (-add make-hset adj b a))))
         (progn (incf (graph-num-edges grph) 2)
@@ -74,23 +70,21 @@ a simple (undirected) graph structure based on adjacency lists.
 
 
 (declaim (inline -prune))
-(defun -prune (adj verts a)
+(defun -prune (adj a)
   (declare #.*opt-settings* (pos-int a))
   (multiple-value-bind (val exists) (gethash a adj)
     (if (not exists)
-        (hset:del verts a)
         (when (< (the pos-int (hset:num val)) 1)
-              (remhash a adj)
-              (hset:del verts a)))))
+              (remhash a adj)))))
 
 
 (defun del (grph a b)
   (declare #.*opt-settings* (graph grph) (pos-int a b))
-  (with-struct (graph- adj verts) grph
+  (with-struct (graph- adj) grph
     (if (reduce (lambda (x y) (or x y))
                 (list (-del adj a b) (-del adj b a)))
-        (progn (-prune adj verts a)
-               (-prune adj verts b)
+        (progn (-prune adj a)
+               (-prune adj b)
                (incf (graph-num-edges grph) -2)
                t))))
 
@@ -102,7 +96,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun get-num-verts (grph)
   (declare #.*opt-settings* (graph grph))
-  (hset:num (graph-verts grph)))
+  (hash-table-count (graph-adj grph)))
 
 
 (defun mem (grph a b)
@@ -126,7 +120,10 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun get-verts (grph)
   (declare #.*opt-settings* (graph grph))
-  (hset:to-list (graph-verts grph)))
+  (loop for v being the hash-keys of (graph-adj grph)
+        using (hash-value ee)
+        if (> (hash-table-count ee) 0)
+        collect v))
 
 
 (defun get-incident-edges (grph v)
@@ -148,7 +145,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun vmem (grph v)
   (declare #.*opt-settings* (graph grph) (pos-int v))
-  (hset:mem (graph-verts grph) v))
+  (if (gethash v (graph-adj grph)) t nil))
 
 
 (defmacro with-graph-edges ((grph e) &body body)

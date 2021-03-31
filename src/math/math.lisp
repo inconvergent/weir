@@ -1,33 +1,39 @@
 
 (in-package :math)
 
-(deftype pos-int (&optional (bits 31))
-  `(unsigned-byte ,bits))
+(deftype pos-int (&optional (bits 31)) `(unsigned-byte ,bits))
 
 
 (declaim (inline clamp))
 (defun clamp (v mi ma)
   (declare #.*opt-settings* (double-float v mi ma))
-  (cond ((< v mi) mi)
-        ((< v ma) v)
-        (t ma)))
+  (max (min v ma) mi))
 
+
+(declaim (inline last*))
+(defun last* (l)
+  (declare #.*opt-settings* (list l))
+  "last element of l"
+  (first (last l)))
 
 (declaim (inline close-path))
 (defun close-path (p)
   (declare #.*opt-settings* (list p))
-  (append p (list (nth 0 p))))
+  "append first element of p to end of p"
+  (append p (subseq p 0 1)))
 
-;(declaim (inline last*))
-;(defun last* (l)
-;  (declare #.*opt-settings* (list l))
-;  (first (last l)))
+(declaim (inline close-path*))
+(defun close-path* (p)
+  (declare #.*opt-settings* (list p))
+  "append last element of p to front of p"
+  (cons (last* p) p))
 
 
 ; RANGES
 
 
 (defmacro nrep (n &body body)
+  "returns list with body repeated n times"
   (alexandria:with-gensyms (nname)
     `(loop with ,nname of-type pos-int = ,n
            repeat ,nname collect (progn ,@body))))
@@ -35,12 +41,18 @@
 
 (defun range (a &optional (b nil))
   (declare #.*opt-settings* (fixnum a))
+  "fixnums from 0 to a, or a to b."
   (if (not b) (loop for x of-type fixnum from 0 below a collect x)
-              (loop for x of-type fixnum from a below (the fixnum b) collect x)))
+              (loop for x of-type fixnum from a below (the fixnum b)
+                    collect x)))
 
 
 (defun lpos (ll &key (fx #'first))
   (declare (list ll) (function fx))
+  "
+  apply fx to every element in ll.
+  eg get first element of lists in list of lists
+  "
   (mapcar fx ll))
 
 
@@ -51,9 +63,21 @@
         for i of-type fixnum in ii collect (aref arr i)))
 
 
+; TODO pretty sure there is a better way to do this
+(declaim (inline ll-transpose))
+(defun ll-transpose (l)
+  (declare #.*opt-settings* (list l))
+  "transpose list of lists"
+  (labels ((-reduce (acc v) (loop for a in acc and b in v collect (cons b a))))
+    (mapcar #'reverse (reduce #'-reduce l
+                              :initial-value (loop repeat (length (first l))
+                                                   collect (list))))))
+
+
 (declaim (inline list>than))
 (defun list>than (l n)
   (declare (list l) (pos-int n))
+  "list is longer than n?"
   (consp (nthcdr n l)))
 
 
@@ -75,6 +99,7 @@
 (declaim (inline linspace))
 (defun linspace (n a b &key (end t))
   (declare #.*opt-settings* (pos-int n) (double-float a b) (boolean end))
+  "n double-floats from a to b."
   (if (> n 1)
     (loop with ban of-type double-float = (/ (- b a) (if end (1- n) n))
           for i of-type fixnum from 0 below n
@@ -85,11 +110,16 @@
 (declaim (inline lerp))
 (defun lerp (s a b)
   (declare #.*opt-settings* (double-float s a b))
+  "
+  linear interpolation between a and b.
+  if 0 < s < 1 the result is between a and b
+  "
   (+ a (* s (- b a))))
 
 (declaim (inline llerp))
 (defun llerp (s ab)
   (declare #.*opt-settings* (double-float s) (list ab))
+  "list of interpolations on ab"
   (apply #'lerp s ab))
 
 ; LIST MATH

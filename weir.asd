@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "4.6.1"
+  :version "4.7.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -20,10 +20,12 @@
                (:file "various")
                (:file "fn")
                (:file "state")
+               (:file "hset")
                (:file "math/math")
                (:file "rnd/rnd")
                (:file "vec/base")
                (:file "vec/vec")
+               (:file "vec/checks")
                (:file "vec/3vec")
                (:file "vec/avec")
                (:file "parallel/main")
@@ -39,10 +41,9 @@
                (:file "pigment/pigment")
                (:file "pigment/non-alpha")
                (:file "pigment/extra")
-               (:file "hset")
                (:file "rnd/extra")
-               (:file "rnd/walkers")
                (:file "rnd/3rnd")
+               (:file "rnd/walkers")
                (:file "graph/main")
                (:file "graph/paths")
                (:file "graph/edge-set")

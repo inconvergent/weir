@@ -120,9 +120,19 @@
   (declare (list edge) (symbol prop))
   (lambda (wer) (setf (get-edge-prop wer edge prop) val)))
 
+(defun lset-edge-prop? (edges prop &optional (val t))
+  (declare (list edges) (symbol prop))
+  (lambda (wer) (lset-edge-prop wer edges prop val)))
+
+
 (defun set-vert-prop? (v prop &optional (val t))
   (declare (fixnum v) (symbol prop))
   (lambda (wer) (setf (get-vert-prop wer v prop) val)))
+
+(defun lset-vert-prop? (verts prop &optional (val t))
+  (declare (list verts) (symbol prop))
+  (lambda (wer) (lset-vert-prop wer verts prop val)))
+
 
 (defun set-grp-prop? (g prop &optional (val t))
   (declare (symbol g) (symbol prop))

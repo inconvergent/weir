@@ -47,9 +47,7 @@
 
 (defun nl (gf &key (left 0d0))
   (declare (gridfont gf) (double-float left))
-  "
-  newline
-  "
+  "newline"
   (setf (gridfont-prev gf) nil)
   (with-struct (gridfont- pos nl scale) gf
     (vec:set! pos (vec:vec left (+ (vec:vec-y pos) (* nl scale))))))
@@ -57,9 +55,7 @@
 
 (defun update (gf &key pos scale sp nl)
   (declare (gridfont gf))
-  "
-  update gridfont properties
-  "
+  "update gridfont properties"
   (when pos (vec:set! (gridfont-pos gf) pos))
   (when scale (setf (gridfont-scale gf) scale))
   (when sp (setf (gridfont-sp gf) sp))
@@ -75,9 +71,7 @@
 
 (defun wc (gf c &key xy)
   (declare (gridfont gf))
-  "
-  write single character, c
-  "
+  "write single character, c"
   (with-struct (gridfont- symbols scale sp pos) gf
     (when xy (vec:set! pos xy))
     (let* ((meta (-get-meta symbols c))

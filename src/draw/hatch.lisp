@@ -87,12 +87,10 @@
 
 (defun hatch (pts &key (angles 0d0) (rs 3d0) (esize 3000d0)
                   &aux (pts* (ensure-vector pts)))
-  "
-  draw hatches at angles inside the area enclosed by the path in pts
-  "
+  "draw hatches at angles inside the area enclosed by the path in pts"
+
   (when (> (vec:dst (aref pts* 0) (vector-last pts*)) 0.0001d0)
         (error "first and last element in pts must be close to each other."))
-
   (loop with res = (make-adjustable-vector)
         for a in (if (equal (type-of angles) 'cons) angles (list angles))
         do (loop for line in (-get-angle-zero-point-lines pts* a rs esize)

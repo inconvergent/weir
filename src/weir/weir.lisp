@@ -181,6 +181,12 @@
   (with-grp (wer g* g)
     (graph:get-edges (grp-grph g*))))
 
+(defun get-connected-verts (wer &key g)
+  (declare #.*opt-settings* (weir wer))
+  "get verts in g with at least one connected edge"
+  (with-grp (wer g* g)
+    (graph:get-verts (grp-grph g*))))
+
 (defun get-grp-as-path (wer &key g)
   (declare #.*opt-settings* (weir wer))
   "returns (values path cycle?)"

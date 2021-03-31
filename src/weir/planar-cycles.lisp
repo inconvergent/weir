@@ -20,10 +20,9 @@
   (declare (weir wer))
   "
   get west-most vert with at least one incident vert.
-  if there are multple candidate, select the one with lowest y value.
+  if there are multple candidates, select the one with lowest y value.
   "
-  (-get-west-most-vert (delete-duplicates (alexandria:flatten
-                                            (get-edges wer :g g)))
+  (-get-west-most-vert (get-connected-verts wer :g g)
                        (lambda (v) (get-vert wer v))
                        (lambda (v) (get-incident-edges wer v))))
 
@@ -103,8 +102,7 @@
   (declare (graph::graph grph) (function dirfx adjfx))
   (when (< (graph:get-num-edges grph) 1) (return-from -do-walk-cycle nil))
   (let* ((prev (-get-west-most-vert
-                 (delete-duplicates (alexandria:flatten
-                                      (graph:get-edges grph)))
+                 (graph:get-verts grph)
                  vertfx
                  (lambda (v) (graph:get-incident-edges grph v))))
          (start prev)
