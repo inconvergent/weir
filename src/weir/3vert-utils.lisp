@@ -3,90 +3,81 @@
 (declaim (inline -3dimtest))
 (defun -3dimtest (wer)
   (declare #.*opt-settings* (weir wer))
-  (when (not (= (weir-dim wer) 3)) (error "wrong dimension, use 3.")))
+  (when (not (= (weir-dim wer) 3)) (error "wrong dimension, expected 3.")))
 
 (defun 3get-verts (wer vv &aux (vv* (if (equal (type-of vv) 'cons)
                                        vv (to-list vv))))
-  "
-  get the coordinates (vec) of verts in vv
-  "
   (declare #.*opt-settings* (weir wer) (sequence vv))
+  "get the coordinates (vec) of verts in vv"
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (-valid-verts (num-verts vv* v)
       (avec:3getv verts v))))
 
 
 (defun 3get-grp-verts (wer &key g order)
+  (declare #.*opt-settings* (weir wer) (boolean order))
   "
   returns all vertices in grp g.
   note: verts only belong to a grp if they are part of an edge in grp.
   "
-  (declare #.*opt-settings* (weir wer) (boolean order))
   (-3dimtest wer)
   (3get-verts wer (get-vert-inds wer :g g :order order)))
 
 
 (defun 3add-vert! (wer xy)
+  (declare #.*opt-settings* (weir wer) (vec:3vec xy))
   "
   adds a new vertex to weir
   returns the new vert ind.
   "
-  (declare #.*opt-settings* (weir wer) (vec:3vec xy))
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (avec:3setv verts num-verts xy))
   (1- (incf (weir-num-verts wer))))
 
 
 (defun 3add-verts! (wer vv)
+  (declare #.*opt-settings* (weir wer) (list vv))
   "
   adds new vertices to weir
   returns the ids of the new vertices
   "
-  (declare #.*opt-settings* (weir wer) (list vv))
   (-3dimtest wer)
   (loop for xy of-type vec:3vec in vv
         collect (3add-vert! wer xy)))
 
 
 (defun 3get-vert (wer v)
-  "
-  get the coordinate (vec) of vert v.
-  "
   (declare #.*opt-settings* (weir wer) (pos-int v))
+  "get the coordinate (vec) of vert v"
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (-valid-vert (num-verts v)
       (avec:3getv verts v))))
 
 
 (defun 3get-all-verts (wer)
-  "
-  returns the coordinates (vec) of all vertices.
-  "
   (declare #.*opt-settings* (weir wer))
+  "returns the coordinates (vec) of all vertices"
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (loop for v of-type pos-int from 0 below num-verts
           collect (avec:3getv verts v) of-type vec:3vec)))
 
 
 (defun 3make-vert-getter (wer)
   (declare (weir wer))
-  (let ((verts (to-vector (weir:3get-all-verts wer))))
-    (declare (type simple-array verts))
+  (-3dimtest wer)
+  (let ((verts (to-vector (weir:3get-all-verts wer) :type 'vec:3vec)))
+    (declare (type (simple-array vec:3vec) verts))
     (lambda (vv) (declare (list vv))
-      (mapcar (lambda (i) (declare (pos-int i))
-                (aref verts i)) vv))))
+      (mapcar (lambda (i) (declare (pos-int i)) (aref verts i))
+              vv))))
 
 
 (declaim (inline 3move-vert!))
@@ -95,8 +86,7 @@
            (weir wer) (pos-int i) (vec:3vec v) (boolean rel))
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (when (>= i num-verts)
           (error "attempting to move invalid vert, ~a (~a)" i num-verts))
     (vec:3with-xy (v vx vy vz)
@@ -121,21 +111,17 @@
 
 
 (defun 3edge-length (wer a b)
-  "
-  returns the length of edge (a b).
-  "
   (declare #.*opt-settings* (weir wer) (pos-int a b))
+  "returns the length of edge (a b)"
   (-3dimtest wer)
   (with-struct (weir- verts) wer
-    (declare (type (simple-array double-float) verts))
+    (declare (double-array verts))
     (avec:3dst verts verts a b)))
 
 
 (defun 3ledge-length (wer e)
-  "
-  returns the length of edge e=(a b).
-  "
   (declare #.*opt-settings* (weir wer) (list e))
+  "returns the length of edge e=(a b)"
   (-3dimtest wer)
   (apply #'3edge-length wer e))
 
@@ -165,11 +151,8 @@
 
 
 (defun 3prune-edges-by-len! (wer lim &optional (fx #'>))
-  "
-  remove edges longer than lim, use fx #'< to remove edges shorter than
-  lim.
-  "
   (declare #.*opt-settings* (weir wer) (double-float lim) (function fx))
+  "remove edges longer than lim, use fx #'< to remove edges shorter than lim"
   (-3dimtest wer)
   (itr-edges (wer e)
     (when (funcall (the function fx) (3ledge-length wer e) lim)
@@ -178,7 +161,7 @@
 
 (declaim (inline -3center))
 (defun -3center (verts v mid mx my mz &key (s 1d0))
-  (declare #.*opt-settings* (type (simple-array double-float) verts)
+  (declare #.*opt-settings* (double-array verts)
            (pos-int v) (vec:vec mid) (double-float mx my my s))
   (avec:3with-vec (verts v x y z)
     (setf x (+ (vec:3vec-x mid) (* s (- x mx)))
@@ -194,13 +177,10 @@
         (t (/ (the double-float max-side) sz))))
 
 (defun 3center! (wer &key (xy vec:*3zero*) max-side (non-edge t) g)
-  "
-  center the verts of wer on xy. returns the previous center.
-  "
+  "center the verts of wer on xy. returns the previous center"
   (-3dimtest wer)
   (with-struct (weir- verts num-verts) wer
-    (declare (type (simple-array double-float) verts)
-             (pos-int num-verts))
+    (declare (double-array verts) (pos-int num-verts))
     (multiple-value-bind (minx maxx miny maxy minz maxz)
       (if non-edge (avec:3minmax verts num-verts)
                    (avec::3minmax* verts (get-vert-inds wer :g g)))
@@ -260,16 +240,12 @@
 (defun 3build-kdtree (wer)
   (declare (weir wer))
   (-3dimtest wer)
-  (setf (weir-kd wer) (kdtree:make* (weir-verts wer)
-                                    (weir-num-verts wer))))
+  (setf (weir-kd wer) (kdtree:make* (weir-verts wer) (weir-num-verts wer))))
 
 
 (declaim (inline -3is-rel-neigh))
 (defun -3is-rel-neigh (verts u v near)
-  (declare #.*opt-settings*
-           (type (simple-array double-float) verts)
-           (pos-int u v)
-           (list near))
+  (declare #.*opt-settings* (double-array verts) (pos-int u v) (list near))
   (loop with d of-type double-float = (avec:3dst2 verts verts u v)
         for w of-type pos-int in near
         if (not (> (the double-float
@@ -281,11 +257,11 @@
   t)
 
 (defun 3relative-neighborhood! (wer rad &key g)
+  (declare #.*opt-settings* (weir wer) (double-float rad))
   "
   find the relative neigborhood graph (limited by the radius rad) of verts
   in wer. the graph is made in grp g.
   "
-  (declare #.*opt-settings* (weir wer) (double-float rad))
   (-3dimtest wer)
   (3build-kdtree wer)
   (let ((c 0))
@@ -311,18 +287,14 @@
 
 
 (defun 3export-verts-grp (wer &key g)
-  "
-  export verts, as well as the edges in g, on the format (verts edges)
-  "
   (declare #.*opt-settings* (weir wer))
+  "export verts, as well as the edges in g, on the format (verts edges)"
   (-3dimtest wer)
   (list (3get-all-verts wer) (get-edges wer :g g)))
 
 (defun 3import-verts-grp (wer o &key g)
-  "
-  import data exported using 3export-verts-grp.
-  "
   (declare #.*opt-settings* (weir wer) (list o))
+  "import data exported using 3export-verts-grp"
   (-3dimtest wer)
   (when (> (the pos-int (get-num-verts wer)) 0)
         (error "ensure there are no initial verts in wer."))

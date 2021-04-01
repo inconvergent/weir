@@ -55,11 +55,11 @@ a simple (undirected) graph structure based on adjacency lists.
   (declare #.*opt-settings* (graph grph) (pos-int a b))
   (with-struct (graph- adj make-hset) grph
     (declare (function make-hset))
-    (if (progn (reduce (lambda (x y) (or x y))
-                       (list (-add make-hset adj a b)
-                             (-add make-hset adj b a))))
-        (progn (incf (graph-num-edges grph) 2)
-               t))))
+    (let ((ab (-add make-hset adj a b))
+          (ba (-add make-hset adj b a)))
+      (declare (boolean ab ba))
+      (when (or ab ba) (incf (graph-num-edges grph) 2)
+                       t))))
 
 
 (declaim (inline -del))
@@ -73,26 +73,25 @@ a simple (undirected) graph structure based on adjacency lists.
 (defun -prune (adj a)
   (declare #.*opt-settings* (pos-int a))
   (multiple-value-bind (val exists) (gethash a adj)
-    (if (not exists)
-        (when (< (the pos-int (hset:num val)) 1)
-              (remhash a adj)))))
+    (when (and exists (< (the pos-int (hset:num val)) 1))
+          (remhash a adj))))
 
 
 (defun del (grph a b)
   (declare #.*opt-settings* (graph grph) (pos-int a b))
   (with-struct (graph- adj) grph
-    (if (reduce (lambda (x y) (or x y))
-                (list (-del adj a b) (-del adj b a)))
-        (progn (-prune adj a)
-               (-prune adj b)
-               (incf (graph-num-edges grph) -2)
-               t))))
+    (let ((ab (-del adj a b))
+          (ba (-del adj b a)))
+      (declare (boolean ab ba))
+      (when (or ab ba) (-prune adj a)
+                       (-prune adj b)
+                       (decf (graph-num-edges grph) 2)
+                       t))))
 
 
 (defun get-num-edges (grph)
   (declare #.*opt-settings* (graph grph))
   (/ (graph-num-edges grph) 2))
-
 
 (defun get-num-verts (grph)
   (declare #.*opt-settings* (graph grph))
@@ -108,21 +107,18 @@ a simple (undirected) graph structure based on adjacency lists.
 
 (defun get-edges (grph)
   (declare #.*opt-settings* (graph grph))
-  (let ((res (list))
-        (adj (graph-adj grph)))
-    (declare (list res) (hash-table adj))
-    (loop for a of-type pos-int being the hash-keys of adj
-          do (loop for b of-type pos-int being the hash-keys of (gethash a adj)
-                   if (<= a b)
-                   do (push (list a b) res)))
-    res))
+  (loop with res of-type list = (list)
+        with adj of-type hash-table = (graph-adj grph)
+        for a of-type pos-int being the hash-keys of adj
+        do (loop for b of-type pos-int being the hash-keys of (gethash a adj)
+                 if (< a b) do (push (list a b) res))
+        finally (return res)))
 
 
 (defun get-verts (grph)
   (declare #.*opt-settings* (graph grph))
   (loop for v being the hash-keys of (graph-adj grph)
-        using (hash-value ee)
-        if (> (hash-table-count ee) 0)
+          using (hash-value ee)
         collect v))
 
 
@@ -132,7 +128,6 @@ a simple (undirected) graph structure based on adjacency lists.
     (let ((a (gethash v adj)))
       (when a (loop for w of-type pos-int being the hash-keys of a
                     collect (sort (list v w) #'<))))))
-
 
 (defun -only-incident-verts (v ee)
   (declare (pos-int v) (list ee))

@@ -161,6 +161,7 @@
 (defun to-vector (init &key (type t))
   (declare (list init))
   (make-array (length init) :initial-contents init
+                            :adjustable nil
                             :element-type type))
 
 
@@ -173,7 +174,7 @@
 
 (defun to-adjustable-vector (init &key (type t))
   (declare (sequence init))
-  (make-array (length init) :fill-pointer (length init)
+  (make-array (length init) :fill-pointer t
                             :initial-contents init
                             :element-type type
                             :adjustable t))

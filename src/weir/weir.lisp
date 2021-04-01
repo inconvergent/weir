@@ -2,8 +2,9 @@
 (in-package :weir)
 
 
-(deftype pos-int (&optional (bits 31))
-  `(unsigned-byte ,bits))
+(deftype pos-int (&optional (bits 31)) `(unsigned-byte ,bits))
+
+(deftype double-array () `(simple-array double-float))
 
 
 (defstruct (weir (:constructor -make-weir))

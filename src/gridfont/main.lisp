@@ -82,6 +82,18 @@
       (setf (gridfont-prev gf) (string c))
       res)))
 
+
+(defun get-phrase-box (gf str)
+  (declare (gridfont gf) (string str))
+  "width and height of phrase"
+  (with-struct (gridfont- symbols scale sp) gf
+    (loop for c across str
+          summing (+ (-jsn-get (-get-meta symbols c) :w) sp) into width
+          maximizing (-jsn-get (-get-meta symbols c) :h) into height
+          finally (return (vec:smult!  (vec:vec (coerce width 'double-float)
+                                                (coerce height 'double-float))
+                                       scale)))))
+
 ;TODO: left in make
 ;      left in nl
 ;      top in make

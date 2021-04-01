@@ -24,41 +24,41 @@
   (scene nil :read-only nil))
 
 
-(defun -view-box (width height)
+(defun -vb (width height)
   (format nil "0 0 ~f ~f" width height))
 
 (defun -get-scene (layout)
   (case layout
     (:a4-landscape (cl-svg:make-svg-toplevel *svg* :height "210mm" :width "297mm"
-                     :view-box (-view-box *long* *short*)))
+                     :view-box (-vb *long* *short*)))
     (:a4-portrait (cl-svg:make-svg-toplevel *svg* :height "297mm" :width "210mm"
-                     :view-box (-view-box *short* *long*)))
+                     :view-box (-vb *short* *long*)))
     (:a3-landscape (cl-svg:make-svg-toplevel *svg* :height "297mm" :width "420mm"
-                     :view-box (-view-box *long* *short*)))
+                     :view-box (-vb *long* *short*)))
     (:a3-portrait (cl-svg:make-svg-toplevel *svg* :height "420mm" :width "297mm"
-                     :view-box (-view-box *short* *long*)))
+                     :view-box (-vb *short* *long*)))
     (:a2-landscape (cl-svg:make-svg-toplevel *svg* :height "420mm" :width "594mm"
-                     :view-box (-view-box *long* *short*)))
+                     :view-box (-vb *long* *short*)))
     (:a2-portrait (cl-svg:make-svg-toplevel *svg* :height "594mm" :width "420mm"
-                     :view-box (-view-box *short* *long*)))
+                     :view-box (-vb *short* *long*)))
     (otherwise (error "invalid layout. use: :a4-portrait, :a4-landscape,
-                      :a3-landscape, :a3-portrait, a2-landscape or a2-portrait;
-                      or use (make* :height h :width w)"))))
+:a3-landscape, :a3-portrait, a2-landscape or a2-portrait; or use
+(make* :height h :width w)"))))
 
 
 (defun -get-width-height (layout)
-  (case layout (:a4-landscape (list *long* *short*))
-               (:a4-portrait (list *short* *long*))
-               (:a3-landscape (list *long* *short*))
-               (:a3-portrait (list *short* *long*))
-               (:a2-landscape (list *long* *short*))
-               (:a2-portrait (list *short* *long*))))
+  (case layout (:a4-landscape (values *long* *short*))
+               (:a4-portrait (values *short* *long*))
+               (:a3-landscape (values *long* *short*))
+               (:a3-portrait (values *short* *long*))
+               (:a2-landscape (values *long* *short*))
+               (:a2-portrait (values *short* *long*))))
 
 (defun -select-arg (l) (find-if #'identity l))
 
 (defun make (&key (layout :a4-landscape) stroke stroke-width rep-scale
                   fill-opacity stroke-opacity so rs fo sw)
-  (destructuring-bind (width height) (-get-width-height layout)
+  (multiple-value-bind (width height) (-get-width-height layout)
     (make-draw-svg :layout layout
                    :height height :width width
                    :stroke (-coerce-hex (if stroke stroke "black"))
@@ -69,9 +69,9 @@
                    :scene (-get-scene layout))))
 
 
-(defun make* (&key (height 1000d0) (width 1000d0) stroke stroke-width rep-scale
-                   fill-opacity stroke-opacity so rs fo sw)
-  (make-draw-svg :layout 'custom
+(defun make* (&key (height 1000d0) (width 1000d0) stroke stroke-width
+                   rep-scale fill-opacity stroke-opacity so rs fo sw)
+  (make-draw-svg :layout :custom
                  :height height :width width
                  :stroke (-coerce-hex (if stroke stroke "black"))
                  :fill-opacity (-select-arg (list fill-opacity fo))
@@ -81,7 +81,7 @@
                  :scene (cl-svg:make-svg-toplevel *svg*
                           :height height :width width)))
 
-
+; TODO: make a single "update" function
 (defun set-stroke (psvg stroke)
   (declare (draw-svg psvg))
   (setf (draw-svg-stroke psvg) (-coerce-hex stroke)))
@@ -255,8 +255,6 @@
                  (funcall fx h)))))
 
 
-(defun -fl (a) (declare (list a)) (first (last a)))
-
 (defun -bzspl-do-open (pts pth)
   (cl-svg:with-path pth (-move-to (first pts)))
   (if (= (length pts) 3)
@@ -266,7 +264,8 @@
       (let ((inner (subseq pts 1 (1- (length pts)))))
         (loop for a in inner and b in (cdr inner)
               do (cl-svg:with-path pth (-quadratic a (vec:mid a b))))
-        (cl-svg:with-path pth (-quadratic (-fl inner) (-fl pts))))))
+        (cl-svg:with-path pth
+          (-quadratic (math:last* inner) (math:last* pts))))))
 
 
 (defun -roll-once (a)
@@ -274,7 +273,7 @@
   (append (subseq a 1) (list (first a))))
 
 (defun -bzspl-do-closed (pts pth)
-  (cl-svg:with-path pth (-move-to (vec:mid (-fl pts) (first pts))))
+  (cl-svg:with-path pth (-move-to (vec:mid (math:last* pts) (first pts))))
   (loop for a in pts
         and b in (-roll-once pts)
         do (cl-svg:with-path pth (-quadratic a (vec:mid a b)))))
@@ -360,8 +359,8 @@
 
 
 (defun carc (psvg xy rad a b &key fill sw stroke so)
-  "arc between angles (a b) centered at xy. rotation is ccw"
   (declare (draw-svg psvg) (vec:vec xy) (double-float rad a b))
+  "arc between angles (a b) centered at xy. rotation is ccw"
   (with-struct (draw-svg- scene) psvg
     (draw% scene (:path :d (-carc xy rad a b))
            :fill (-select-fill fill)
@@ -426,6 +425,19 @@
            :stroke-width (-select-sw psvg sw)
            :stroke-opacity (-select-so psvg so)
            :fill-opacity (-select-fo psvg fo))))
+
+
+(defun sign (psvg str &key sw so (scale 2.5d0) (right 55d0) (bottom 9d0))
+  (declare (draw-svg psvg) (string str))
+  (with-struct (draw-svg- width height) psvg
+    (loop with gf = (gridfont:make :scale scale)
+          with b = (gridfont::get-phrase-box gf str)
+          with pos = (vec:vec (- width (vec:vec-x b) right)
+                              (- height (vec:vec-y b) bottom))
+          initially (gridfont:update gf :pos pos)
+          for c across str
+          do (loop for (path closed) in (gridfont:wc gf c)
+                   do (path psvg path :so so :sw sw :closed closed)))))
 
 
 (defun save (psvg fn)
