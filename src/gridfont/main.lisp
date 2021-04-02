@@ -1,6 +1,9 @@
 
 (in-package :gridfont)
 
+; json docs https://common-lisp.net/project/cl-json/cl-json.html
+
+(defun -jsn-get (jsn k) (cdr (assoc k jsn)))
 
 (defstruct (gridfont (:constructor -make-gridfont))
   (scale 1d0 :type double-float :read-only nil)
@@ -10,23 +13,19 @@
   (prev nil :read-only nil)
   (symbols (make-hash-table :test #'equal) :read-only t))
 
-
 (defun make (&key (fn (internal-path-string "src/gridfont/smooth"))
                   (scale 1d0) (nl 13d0) (sp 1d0) (xy (vec:zero)))
   (with-open-file (fstream (ensure-filename fn ".json" t)
                            :direction :input)
     (loop with res = (make-hash-table :test #'equal)
-          with jsn = (json:decode-json fstream)
+          with jsn = (json:decode-json fstream) ; jsn is an alist
           with symbols = (-jsn-get jsn :symbols)
           for (k . v) in symbols
           do (setf (gethash (symbol-name k) res) v)
           finally (return (-make-gridfont :symbols res :scale scale
                                           :sp sp :pos xy :nl nl)))))
 
-(defun -jsn-get (jsn k)
-  (cdr (find k jsn :key #'car)))
-
-(defun -coerce-point (p s)
+(defun -coerce-vec (p &optional (s 1d0))
   (declare (list p) (double-float s))
   (vec:vec* (mapcar (lambda (x) (* s (coerce x 'double-float))) p)))
 
@@ -34,7 +33,7 @@
   (declare (list paths) (vec:vec pos) (double-float s))
   (loop for path in paths
         collect (vec:ladd* (loop for p in path
-                                 collect (-coerce-point p s)) pos)))
+                                 collect (-coerce-vec p s)) pos)))
 
 (defun -closed (p &key (tol 0.001d0))
   (declare (list p))
@@ -43,14 +42,6 @@
 (defun -detect-closed (paths)
   (declare (list paths))
   (loop for p in paths collect (list p (-closed p))))
-
-
-(defun nl (gf &key (left 0d0))
-  (declare (gridfont gf) (double-float left))
-  "newline"
-  (setf (gridfont-prev gf) nil)
-  (with-struct (gridfont- pos nl scale) gf
-    (vec:set! pos (vec:vec left (+ (vec:vec-y pos) (* nl scale))))))
 
 
 (defun update (gf &key pos scale sp nl)
@@ -62,12 +53,19 @@
   (when nl (setf (gridfont-nl nl) sp)))
 
 
-(defun -get-meta (symbols c &aux (c* (string c)))
-  (multiple-value-bind (meta exists) (gethash c* symbols)
-    (when (not exists)
-          (error "symbol does not exist: ~a" c*))
-    meta))
+(defun nl (gf &key (left 0d0))
+  (declare (gridfont gf) (double-float left))
+  "write a newline"
+  (setf (gridfont-prev gf) nil)
+  (with-struct (gridfont- pos nl scale) gf
+    (vec:set! pos (vec:vec left (+ (vec:vec-y pos) (* nl scale))))))
 
+
+(defun -get-meta (symbols c &aux (c* (string c)))
+  (multiple-value-bind (meta exists)
+    (gethash (funcall json:*json-identifier-name-to-lisp* c*) symbols)
+    (unless exists (error "symbol does not exist: ~a (representation: ~a)" c c*))
+    meta))
 
 (defun wc (gf c &key xy)
   (declare (gridfont gf))
@@ -90,10 +88,10 @@
     (loop for c across str
           summing (+ (-jsn-get (-get-meta symbols c) :w) sp) into width
           maximizing (-jsn-get (-get-meta symbols c) :h) into height
-          finally (return (vec:smult!  (vec:vec (coerce width 'double-float)
-                                                (coerce height 'double-float))
-                                       scale)))))
+          finally (return (-coerce-vec (list width height) scale)))))
+
 
 ;TODO: left in make
 ;      left in nl
 ;      top in make
+

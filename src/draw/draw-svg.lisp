@@ -24,8 +24,7 @@
   (scene nil :read-only nil))
 
 
-(defun -vb (width height)
-  (format nil "0 0 ~f ~f" width height))
+(defun -vb (width height) (format nil "0 0 ~f ~f" width height))
 
 (defun -get-scene (layout)
   (case layout
@@ -438,6 +437,17 @@
           for c across str
           do (loop for (path closed) in (gridfont:wc gf c)
                    do (path psvg path :so so :sw sw :closed closed)))))
+
+(defun title (psvg str &key sw so (scale 2.5d0) (left 9d0) (top 9d0))
+  (declare (draw-svg psvg) (string str))
+  (loop with gf = (gridfont:make :scale scale)
+        with b = (gridfont::get-phrase-box gf str)
+        with pos = (vec:vec (+  left)
+                            (+  top))
+        initially (gridfont:update gf :pos pos)
+        for c across str
+        do (loop for (path closed) in (gridfont:wc gf c)
+                 do (path psvg path :so so :sw sw :closed closed))))
 
 
 (defun save (psvg fn)
