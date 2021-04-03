@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "4.8.0"
+  :version "4.9.0"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -64,7 +64,7 @@
                (:file "weir/weir-with-macro")
                (:file "weir/vert-utils")
                (:file "weir/planar-cycles")
-               (:file "weir/cycles")
+               (:file "weir/paths")
                (:file "weir/3vert-utils")
                (:file "weir/alterations")
                (:file "weir/3alterations")
@@ -93,6 +93,7 @@
                (:file "plot-jpath")
                (:file "plot-outline-path")
                (:file "plot-simplify")
+               (:file "plot-paths")
                (:file "plot")
                (:file "rnd")
                (:file "sandpaint")

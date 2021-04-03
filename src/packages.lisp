@@ -564,7 +564,7 @@
     #:edge-set->path
     #:edge-set-symdiff
     #:edge-sets->cycle-basis
-    #:get-continous-paths
+    #:get-segments
     #:get-cycle-basis
     #:get-edges
     #:get-incident-edges
@@ -578,6 +578,7 @@
     #:mem
     #:path->edge-set
     #:vmem
+    #:walk-graph
     #:with-graph-edges)
   (:import-from #:weir-utils
     #:*opt-settings*
@@ -856,6 +857,7 @@
     #:3prune-edges-by-len!
     #:3relative-neighborhood!
     #:3split-edge!
+    #:walk-graph
     #:3split-edge?
     #:3transform!
     #:3vadd-edge?
@@ -893,7 +895,7 @@
     #:get-all-verts
     #:get-alteration-result-list
     #:get-alteration-result-map
-    #:get-continous-paths
+    #:get-segments
     #:get-cycle-basis
     #:get-edge-prop
     #:get-edge-prop%

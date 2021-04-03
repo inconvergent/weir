@@ -73,7 +73,8 @@
             ; this isnt an exhaustive manifold test?
             ; and it should be configurable whether it fails?
             (unless (= (1- (length res)) (length es))
-                    (error "path is manifold"))
+                    (error "path is manifold or incomplete. eslen: ~a. pathlen ~a"
+                           (length es) (length res)))
             (values res nil)))))))
 
 

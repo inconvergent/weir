@@ -8,8 +8,7 @@
 (defparameter *svg* 'cl-svg:svg-1.1-toplevel)
 
 
-(defun -coerce-hex (c)
-  (if (equal (type-of c) 'pigment:rgba) (pigment:to-hex c) c))
+(defun -hex (c) (if (equal (type-of c) 'pigment:rgba) (pigment:to-hex c) c))
 
 
 (defstruct draw-svg
@@ -60,7 +59,7 @@
   (multiple-value-bind (width height) (-get-width-height layout)
     (make-draw-svg :layout layout
                    :height height :width width
-                   :stroke (-coerce-hex (if stroke stroke "black"))
+                   :stroke (-hex (if stroke stroke "black"))
                    :fill-opacity (-select-arg (list fill-opacity fo))
                    :rep-scale (-select-arg (list rep-scale rs 0.5d0))
                    :stroke-opacity (-select-arg (list stroke-opacity so))
@@ -72,7 +71,7 @@
                    rep-scale fill-opacity stroke-opacity so rs fo sw)
   (make-draw-svg :layout :custom
                  :height height :width width
-                 :stroke (-coerce-hex (if stroke stroke "black"))
+                 :stroke (-hex (if stroke stroke "black"))
                  :fill-opacity (-select-arg (list fill-opacity fo))
                  :rep-scale (-select-arg (list rep-scale rs 0.5d0))
                  :stroke-opacity (-select-arg (list stroke-opacity so))
@@ -83,7 +82,7 @@
 ; TODO: make a single "update" function
 (defun set-stroke (psvg stroke)
   (declare (draw-svg psvg))
-  (setf (draw-svg-stroke psvg) (-coerce-hex stroke)))
+  (setf (draw-svg-stroke psvg) (-hex stroke)))
 
 (defun set-stroke-width (psvg sw)
   (declare (draw-svg psvg) (double-float sw))
@@ -109,19 +108,19 @@
 
 (defun -quadratic (p q)
   (declare (vec:vec p q))
-  (format nil "Q~f,~f ~f,~f" (vec:vec-x p) (vec:vec-y p)
-                             (vec:vec-x q) (vec:vec-y q)))
+  (format nil "Q~,3f,~,3f ~,3f,~,3f" (vec:vec-x p) (vec:vec-y p)
+                                     (vec:vec-x q) (vec:vec-y q)))
 
 (defun -arccirc (xy r &aux (r2 (* 2d0 r)))
-  (format nil "M~f,~f m -~f,0 a ~f,~f 0 1,0 ~f 0 a ~f,~f 0 1,0 -~f 0"
-              (vec:vec-x xy) (vec:vec-y xy) r r r r2 r r r2))
+  (format nil "M~,3f,~,3f~%m-~,3f,0~%a~,3f,~,3f 0 1,0 ~,3f 0
+a~,3f,~,3f 0 1,0 -~,3f 0Z" (vec:vec-x xy) (vec:vec-y xy) r r r r2 r r r2))
 
 ;https://stackoverflow.com/questions/5736398/how-to-calculate-the-svg-path-for-an-arc-of-a-circle
 (defun -carc (xy rad a b)
   (let ((axy (vec:from xy (vec:cos-negsin a) rad))
         (bxy (vec:from xy (vec:cos-negsin b) rad))
         (arcflag (if (< (- b a) PI) 0 1)))
-   (format nil "M ~f,~f A ~f,~f 0 ~d,0 ~f ~f"
+   (format nil "M~,3f,~,3f A~,3f,~,3f 0 ~,3d,0 ~,3f ~,3f"
      (vec:vec-x axy) (vec:vec-y axy) rad rad arcflag
      (vec:vec-x bxy) (vec:vec-y bxy))))
 
@@ -442,8 +441,7 @@
   (declare (draw-svg psvg) (string str))
   (loop with gf = (gridfont:make :scale scale)
         with b = (gridfont::get-phrase-box gf str)
-        with pos = (vec:vec (+  left)
-                            (+  top))
+        with pos = (vec:vec left top)
         initially (gridfont:update gf :pos pos)
         for c across str
         do (loop for (path closed) in (gridfont:wc gf c)

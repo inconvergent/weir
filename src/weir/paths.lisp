@@ -32,9 +32,17 @@
 
 ; CONTINOUS PATHS
 
-(defun get-continous-paths (wer &key cycle-info g)
+(defun get-segments (wer &key cycle-info g)
   (with-grp (wer grp g)
-    (graph:get-continous-paths (grp-grph grp) :cycle-info cycle-info)))
+    (graph:get-segments (grp-grph grp) :cycle-info cycle-info)))
+
+(defun walk-graph (wer &key g)
+  (labels ((-angle (a b c)
+             (destructuring-bind (va vb vc) (gvs wer (list a b c))
+               (vec:dot (vec:norm (vec:sub vb va))
+                        (vec:norm (vec:sub vc vb))))))
+    (with-grp (wer grp g)
+      (graph:walk-graph (grp-grph grp) :angle #'-angle))))
 
 
 ; INTERSECTS

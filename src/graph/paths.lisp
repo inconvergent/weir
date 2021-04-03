@@ -12,9 +12,7 @@
 
 (defun del-simple-filaments (grph)
   (declare (graph grph))
-  "
-  recursively remove all simple filament edges until there are none left
-  "
+  "recursively remove all simple filament edges until there are none left"
   (loop until (notany #'identity
                       (loop for v in (get-verts grph)
                             collect (-del-filament grph v))))
@@ -25,11 +23,10 @@
 ;note: this can possibly be improved if k is an array
 (defun -cycle-info (k)
   (declare (list k))
-  (if (= (first k) (first (last k)))
-      (list (cdr k) t)
-      (list k nil)))
+  (if (= (first k) (first (last k))) (list (cdr k) t)
+                                     (list k nil)))
 
-(defun -find-continous (grph start curr)
+(defun -find-segment (grph start curr)
   (declare (graph grph) (pos-int start curr))
   (loop with res = (make-adjustable-vector :type 'pos-int :init (list start))
         with prev of-type pos-int = start
@@ -41,12 +38,12 @@
              ; loop. attach curr to indicate loop
              (when (= curr start)
                    (vextend curr res)
-                   (return-from -find-continous res))
+                   (return-from -find-segment res))
 
              ; dead end/multi
              (unless (= n 2)
                      (vextend curr res)
-                     (return-from -find-continous res))
+                     (return-from -find-segment res))
 
              ; single connection
              (when (= n 2)
@@ -58,12 +55,11 @@
 (defun -add-visited-verts (visited path)
   (loop for v in path do (setf (gethash v visited) t)))
 
-(defun get-continous-paths (grph &key cycle-info)
+(defun get-segments (grph &key cycle-info)
   (declare (graph grph))
   "
-  greedily finds connected paths between multi-intersection points.
-  TODO: rewrite this to avoid cheching everything multiple times.
-  i'm sorry.
+  greedily finds segments between multi-intersection points.  TODO: rewrite
+  this to avoid cheching everything multiple times.  i'm sorry.
   "
   (let ((all-paths (make-hash-table :test #'equal))
         (visited (make-hash-table :test #'equal)))
@@ -77,9 +73,9 @@
          (declare (list incident))
          (= (length incident) 2))
 
-       (-do-find-continous (v next)
+       (-do-find-segment (v next)
          (declare (pos-int v next))
-         (let* ((path (to-list (-find-continous grph v next)))
+         (let* ((path (to-list (-find-segment grph v next)))
                 (key (sort (copy-list path) #'<)))
            (declare (list path key))
            (unless (gethash key all-paths)
@@ -92,7 +88,7 @@
            (declare (list incident))
            (when (funcall testfx incident)
                  (loop for next in (-only-incident-verts v incident)
-                       do (-do-find-continous v next))))))
+                       do (-do-find-segment v next))))))
 
       (loop for v in (sort (get-verts grph) #'<)
             do (-walk-incident-verts v #'-incident-not-two))
@@ -100,10 +96,59 @@
       ; note: this can be improved if we inverted visited, and remove vertices
       ; as they are visited
       (loop for v in (sort (get-verts grph) #'<)
-            do (when (not (gethash v visited))
-                     (-walk-incident-verts v #'-incident-two))))
+            unless (gethash v visited)
+            do (-walk-incident-verts v #'-incident-two)))
 
-    (loop for k of-type list being the hash-values of all-paths
-          if cycle-info collect (-cycle-info k) of-type list
-          else collect k of-type list)))
+    (loop with fx = (if cycle-info #'-cycle-info #'identity)
+          for k of-type list being the hash-values of all-paths
+          collect (funcall fx k) of-type list)))
+
+
+(defun walk-graph (grph &key (angle (lambda (a b c) 1d0)))
+  (declare (graph grph))
+
+  (let ((all-edges (loop with res = (make-hash-table :test #'equal)
+                         for e in (get-edges grph)
+                         do (setf (gethash e res) t)
+                         finally (return res))))
+    (labels
+      ((-ic (a b) (if (< a b) (list a b) (list b a)))
+       (-get-start-edge ()
+         (loop for e being the hash-keys of all-edges
+               do (return-from -get-start-edge e)))
+
+       (-least-angle (a b vv)
+         (cadar (sort
+                  (mapcar (lambda (v)
+                            (list (weir-utils:aif
+                                    (funcall angle a b v)
+                                    weir-utils::it 0d0)
+                                  v))
+                          vv)
+                  #'> :key #'car)))
+
+       (-next-vert-from (a &key but-not)
+         (-least-angle but-not a (remove-if
+                (lambda (v) (or (= v but-not)
+                                (not (gethash (-ic a v) all-edges))))
+                (get-incident-verts grph a))))
+
+       (-until-dead-end (a but-not)
+         (loop with prv = a
+               with res = (list prv)
+               with nxt = (-next-vert-from a :but-not but-not)
+               until (equal nxt nil)
+               do (push nxt res)
+                  (remhash (-ic prv nxt) all-edges)
+                  (let ((nxt* (-next-vert-from nxt :but-not prv)))
+                    (setf prv nxt nxt nxt*))
+               finally (return res))))
+
+      (loop while (> (hash-table-count all-edges) 0)
+            collect (let ((start (-get-start-edge)))
+                      (remhash start all-edges)
+                      (destructuring-bind (a b) start
+                        (concatenate 'list
+                          (-until-dead-end a b)
+                          (reverse (-until-dead-end b a)))))))))
 
