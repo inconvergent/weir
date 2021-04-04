@@ -103,8 +103,11 @@
           for k of-type list being the hash-values of all-paths
           collect (funcall fx k) of-type list)))
 
+(defun -angle-fx (a b c)
+  (declare (ignore a b c))
+  1d0)
 
-(defun walk-graph (grph &key (angle (lambda (a b c) 1d0)))
+(defun walk-graph (grph &key (angle #'-angle-fx))
   (declare (graph grph))
 
   (let ((all-edges (loop with res = (make-hash-table :test #'equal)

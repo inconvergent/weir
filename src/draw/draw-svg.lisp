@@ -6,9 +6,46 @@
 (defparameter *short* 1000d0)
 (defparameter *long* 1414.285d0)
 (defparameter *svg* 'cl-svg:svg-1.1-toplevel)
+(defparameter *colors* (list "gray" "black" "red" "maroon" "yellow" "olive"
+                             "lime" "green" "aqua" "teal" "blue" "navy"
+                             "fuchsia" "purple"))
 
+(defparameter *layouts*
+  `((:a4-landscape . (,*long* ,*short*)) (:a4-portrait . (,*short* ,*long*))
+    (:a3-landscape . (,*long* ,*short*)) (:a3-portrait . (,*short* ,*long*))
+    (:a2-landscape . (,*long* ,*short*)) (:a2-portrait . (,*short* ,*long*))))
+
+
+(declaim (inline -filter-nils))
+(defun -filter-nils (l*)
+  (declare (list l*))
+  (let* ((l (weir-utils:to-vector l*))
+         (n (length l)))
+    (declare (array l) (fixnum n))
+    (loop with res of-type list = (list)
+          for i of-type fixnum from 0 below n by 2
+          if (aref l (1+ i))
+          do (push (aref l i) res)
+             (push (aref l (1+ i)) res)
+          finally (return (reverse res)))))
+
+; this is a rewrite of macro draw from
+; https://github.com/wmannis/cl-svg/blob/master/svg.lisp#L269
+; that filters out nil elements in parms/opts
+(defmacro draw% (scene (shape &rest params) &rest opts)
+  (let ((element (gensym)))
+    `(let ((,element
+             (funcall #'cl-svg::make-svg-element
+                      ,shape (-filter-nils (append (list ,@params)
+                                                   (list ,@opts))))))
+       (cl-svg::add-element ,scene ,element)
+       ,element)))
 
 (defun -hex (c) (if (equal (type-of c) 'pigment:rgba) (pigment:to-hex c) c))
+(defun get-rnd-svg-color () (rnd:rndget *colors*))
+(defun -vb (w h) (format nil "0 0 ~,3f ~,3f" w h))
+(defun -select-arg (l) (find-if #'identity l))
+(defun -select-fill (f) (if f f "none"))
 
 
 (defstruct draw-svg
@@ -22,8 +59,11 @@
   (rep-scale 1d0 :type double-float :read-only nil)
   (scene nil :read-only nil))
 
-
-(defun -vb (width height) (format nil "0 0 ~f ~f" width height))
+(defun -select-so (psvg so) (if so so (draw-svg-stroke-opacity psvg)))
+(defun -select-fo (psvg fo) (if fo fo (draw-svg-fill-opacity psvg)))
+(defun -select-sw (psvg sw) (if sw sw (draw-svg-stroke-width psvg)))
+(defun -select-stroke (psvg s) (if s s (draw-svg-stroke psvg)))
+(defun -select-rep-scale (psvg rs) (if rs rs (draw-svg-rep-scale psvg)))
 
 (defun -get-scene (layout)
   (case layout
@@ -44,19 +84,18 @@
 (make* :height h :width w)"))))
 
 
-(defun -get-width-height (layout)
-  (case layout (:a4-landscape (values *long* *short*))
-               (:a4-portrait (values *short* *long*))
-               (:a3-landscape (values *long* *short*))
-               (:a3-portrait (values *short* *long*))
-               (:a2-landscape (values *long* *short*))
-               (:a2-portrait (values *short* *long*))))
+(defun update (psvg &key stroke sw rs fo so)
+  (declare (draw-svg psvg))
+  (when stroke (setf (draw-svg-stroke psvg) (the string stroke)))
+  (when sw (setf (draw-svg-stroke-width psvg) (the double-float sw)))
+  (when rs (setf (draw-svg-rep-scale psvg) (the double-float rs)))
+  (when fo (setf (draw-svg-fill-opacity psvg) (the double-float fo)))
+  (when so (setf (draw-svg-stroke-opacity psvg) (the double-float so))))
 
-(defun -select-arg (l) (find-if #'identity l))
 
 (defun make (&key (layout :a4-landscape) stroke stroke-width rep-scale
                   fill-opacity stroke-opacity so rs fo sw)
-  (multiple-value-bind (width height) (-get-width-height layout)
+  (destructuring-bind (width height) (cdr (assoc layout *layouts*))
     (make-draw-svg :layout layout
                    :height height :width width
                    :stroke (-hex (if stroke stroke "black"))
@@ -78,24 +117,6 @@
                  :stroke-width (-select-arg (list stroke-width sw 1.1d0))
                  :scene (cl-svg:make-svg-toplevel *svg*
                           :height height :width width)))
-
-; TODO: make a single "update" function
-(defun set-stroke (psvg stroke)
-  (declare (draw-svg psvg))
-  (setf (draw-svg-stroke psvg) (-hex stroke)))
-
-(defun set-stroke-width (psvg sw)
-  (declare (draw-svg psvg) (double-float sw))
-  (setf (draw-svg-stroke-width psvg) sw))
-
-(defun set-rep-scale (psvg rs)
-  (declare (draw-svg psvg) (double-float rs))
-  (setf (draw-svg-stroke-width psvg) rs))
-
-
-(defun get-rnd-svg-color ()
-  (rnd:rndget (list "gray" "black" "red" "maroon" "yellow" "olive" "lime"
-                    "green" "aqua" "teal" "blue" "navy" "fuchsia" "purple")))
 
 
 (defun -move-to (p)
@@ -123,39 +144,6 @@ a~,3f,~,3f 0 1,0 -~,3f 0Z" (vec:vec-x xy) (vec:vec-y xy) r r r r2 r r r2))
    (format nil "M~,3f,~,3f A~,3f,~,3f 0 ~,3d,0 ~,3f ~,3f"
      (vec:vec-x axy) (vec:vec-y axy) rad rad arcflag
      (vec:vec-x bxy) (vec:vec-y bxy))))
-
-
-(defun -select-so (psvg so) (if so so (draw-svg-stroke-opacity psvg)))
-(defun -select-fo (psvg fo) (if fo fo (draw-svg-fill-opacity psvg)))
-(defun -select-sw (psvg sw) (if sw sw (draw-svg-stroke-width psvg)))
-(defun -select-stroke (psvg stroke) (if stroke stroke (draw-svg-stroke psvg)))
-(defun -select-rep-scale (psvg rs) (if rs rs (draw-svg-rep-scale psvg)))
-(defun -select-fill (fill) (if fill fill "none"))
-
-(declaim (inline -filter-nils))
-(defun -filter-nils (l*)
-  (declare (list l*))
-  (let* ((l (weir-utils:to-vector l*))
-         (n (length l)))
-    (declare (array l) (fixnum n))
-    (loop with res of-type list = (list)
-          for i of-type fixnum from 0 below n by 2
-          if (aref l (1+ i))
-          do (push (aref l i) res)
-             (push (aref l (1+ i)) res)
-          finally (return (reverse res)))))
-
-; this is a rewrite of macro draw from
-; https://github.com/wmannis/cl-svg/blob/master/svg.lisp#L269
-; that filters out nil elements in parms/opts
-(defmacro draw% (scene (shape &rest params) &rest opts)
-  (let ((element (gensym)))
-    `(let ((,element
-             (funcall #'cl-svg::make-svg-element
-                      ,shape (-filter-nils (append (list ,@params)
-                                                   (list ,@opts))))))
-       (cl-svg::add-element ,scene ,element)
-       ,element)))
 
 
 (defun -accumulate-path (pth a)
@@ -436,16 +424,6 @@ a~,3f,~,3f 0 1,0 -~,3f 0Z" (vec:vec-x xy) (vec:vec-y xy) r r r r2 r r r2))
           for c across str
           do (loop for (path closed) in (gridfont:wc gf c)
                    do (path psvg path :so so :sw sw :closed closed)))))
-
-(defun title (psvg str &key sw so (scale 2.5d0) (left 9d0) (top 9d0))
-  (declare (draw-svg psvg) (string str))
-  (loop with gf = (gridfont:make :scale scale)
-        with b = (gridfont::get-phrase-box gf str)
-        with pos = (vec:vec left top)
-        initially (gridfont:update gf :pos pos)
-        for c across str
-        do (loop for (path closed) in (gridfont:wc gf c)
-                 do (path psvg path :so so :sw sw :closed closed))))
 
 
 (defun save (psvg fn)

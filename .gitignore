@@ -3,6 +3,7 @@
 *.dat
 *.obj
 *.mp4
+*.tmp
 *.gif
 tmp.lisp
 system-index.txt

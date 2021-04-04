@@ -806,12 +806,10 @@
     #:path
     #:rect
     #:save
-    #:set-rep-scale
-    #:set-stroke
-    #:set-stroke-width
     #:show-boundary
     #:show-crop
     #:square
+    #:update
     #:wcirc
     #:wpath)
   (:import-from #:weir-utils
