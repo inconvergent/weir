@@ -38,9 +38,10 @@
 
 (defun walk-graph (wer &key g)
   (labels ((-angle (a b c)
+             (declare (fixnum a b c))
              (destructuring-bind (va vb vc) (gvs wer (list a b c))
-               (vec:dot (vec:norm (vec:sub vb va))
-                        (vec:norm (vec:sub vc vb))))))
+               (declare (vec:vec va vb vc))
+               (vec:dot (vec:nsub vb va) (vec:nsub vc vb)))))
     (with-grp (wer grp g)
       (graph:walk-graph (grp-grph grp) :angle #'-angle))))
 
@@ -70,8 +71,7 @@
          (declare (array-list edges isects))
          (loop for hits across isects
                for i of-type fixnum from 0
-               if hits
-               do (-add (gvs wer (aref edges i)) i hits)))
+               if hits do (-add (gvs wer (aref edges i)) i hits)))
 
        (-edges-as-lines (edges)
          (declare (array-list edges))
@@ -82,10 +82,9 @@
          (declare (array-list edges isects))
          (loop for hits of-type list across isects
                for i of-type fixnum from 0
-               if hits
-               do (ldel-edge! wer (aref edges i) :g g)
-                  (loop for (c . p) in hits
-                        do (ldel-edge! wer (aref edges c) :g g))))
+               if hits do (ldel-edge! wer (aref edges i) :g g)
+                          (loop for (c . p) in hits
+                                do (ldel-edge! wer (aref edges c) :g g))))
 
        (-sort-hits (isects)
          (loop for i of-type fixnum from 0 below (length isects)

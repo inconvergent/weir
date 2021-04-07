@@ -48,9 +48,8 @@
 (defun rline (s angle &key (xy (zero)) &aux (converse (+ angle PI)))
   (declare #.*opt-settings* (double-float s angle converse) (vec xy))
   "line rotated at angle, size 2*s around xy"
-  (vec:ladd!* (vec:lsmult!*
-                (list (vec:vec (cos angle) (sin angle))
-                      (vec:vec (cos converse) (sin converse))) s)
+  (vec:ladd!* (vec:lsmult!* (list (vec:vec (cos angle) (sin angle))
+                                  (vec:vec (cos converse) (sin converse))) s)
               xy))
 
 
@@ -277,8 +276,7 @@
 (defun lsum (l)
   (declare #.*opt-settings* (list l))
   (loop with res = (zero)
-        for a in l
-        do (add! res a)
+        for a in l do (add! res a)
         finally (return res)))
 
 
@@ -347,9 +345,7 @@
 (declaim (inline polygon))
 (defun polygon (n rad &key (xy *zero*) (rot 0d0))
   (declare #.*opt-settings* (fixnum n) (double-float rad rot) (vec xy))
-  (loop for i of-type fixnum from 0 below n
-        collect (from xy (cos-sin
-                           (+ rot (* (/ (coerce i 'double-float) n) PII))) rad)))
-
-
+  (loop with pin of-type double-float = (/ PII n)
+        for i of-type fixnum from 0 below n
+        collect (from xy (cos-sin (+ rot (* i pin))) rad)))
 

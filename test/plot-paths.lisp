@@ -29,7 +29,9 @@
           do (draw-svg:path psvg (weir:get-verts wer lp)
                             :sw 1d0))
 
-    (draw-svg:save psvg "test/data/plot-paths")))
+    (draw-svg:save psvg
+      (weir-utils:internal-path-string
+        "test/data/plot-paths"))))
 
 (define-file-tests test-plot-paths ()
   (time (%main-plot-paths)))
