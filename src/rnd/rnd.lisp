@@ -8,10 +8,12 @@
 
 (defun set-rnd-state (i)
   (declare (fixnum i))
-  (if (or #+SBCL t nil)
-      (setf *random-state* (sb-ext:seed-random-state i))
-      (warn "rnd:state is only implemented for SBCL. see src/rnd.lisp
-             to implement state for your environment.")))
+   #+SBCL
+   (setf *random-state* (sb-ext:seed-random-state i))
+
+   #+(not SBCL)
+   (warn "rnd:state is only implemented for SBCL. see src/rnd.lisp
+          to implement state for your environment."))
 
 
 (defun make-rnd-state ()
