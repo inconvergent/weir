@@ -40,7 +40,6 @@
   #+ccl (ccl:quitstatus)
   #+clisp (ext:quitstatus)
   #+cmu (unix:unix-exit status)
-  #+ecl (ext:quitstatus)
   #+abcl (ext:quit:status status)
   #+allegro (excl:exitstatus :quiet t)
   #+gcl (common-lisp-user::bye status)
