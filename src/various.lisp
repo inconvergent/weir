@@ -43,7 +43,7 @@
   #+abcl (ext:quit:status status)
   #+allegro (excl:exitstatus :quiet t)
   #+gcl (common-lisp-user::bye status)
-  #+ecl (ext:quitstatus))
+  #+ecl (ext:quit status))
 
 
 ;https://github.com/inconvergent/weir/pull/1/commits/4a1df51914800c78cb34e8194222185ebde12388
