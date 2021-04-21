@@ -1,7 +1,7 @@
 
 (asdf:defsystem #:weir
   :description "A System for Making Generative Systems"
-  :version "4.9.0"
+  :version "4.9.1"
   :author "anders hoff/inconvergent"
   :licence "MIT"
   :in-order-to ((asdf:test-op (asdf:test-op #:weir/tests)))
@@ -78,26 +78,26 @@
   :pathname "test/"
   :serial t
   :components ((:file "test")
-               (:file "bzspl")
-               (:file "curvature")
-               (:file "graph")
+               (:file "parallel")
+               (:file "math")
                (:file "hset")
+               (:file "graph")
+               (:file "rnd")
+               (:file "vec")
+               (:file "bzspl")
                (:file "kdtree")
                (:file "linear-path")
-               (:file "math")
+               (:file "curvature")
                (:file "ortho")
-               (:file "parallel")
-               (:file "pigment")
-               (:file "pix-overlap")
+               (:file "plot")
+               (:file "plot-paths")
+               (:file "plot-simplify")
                (:file "plot-cpath")
                (:file "plot-jpath")
                (:file "plot-outline-path")
-               (:file "plot-simplify")
-               (:file "plot-paths")
-               (:file "plot")
-               (:file "rnd")
+               (:file "pix-overlap")
+               (:file "pigment")
                (:file "sandpaint")
-               (:file "vec")
                (:file "weir")
                (:file "weir-loop")
                (:file "weir3")))

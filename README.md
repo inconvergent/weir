@@ -515,6 +515,7 @@ I would like to thank:
   - https://twitter.com/paulg
   - https://twitter.com/porglezomp
   - https://twitter.com/stylewarning
+  - https://github.com/Hellseher
 
 Who have provided me with useful hints and code feedback.
 

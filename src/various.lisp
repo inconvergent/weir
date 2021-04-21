@@ -4,10 +4,13 @@
 (defvar *opt-settings* '(optimize (safety 1) (speed 3) (debug 2) (space 2)))
 
 
-(declaim (type double-float PII PI5))
+(declaim (type double-float PI* PII PI5))
 
-(defconstant PII (the double-float #.(* PI 2d0)))
-(defconstant PI5 (the double-float #.(* PI 0.5d0)))
+; changed based on comment in this PR:
+; https://github.com/inconvergent/weir/pull/2
+(defconstant PI* #.(coerce pi 'double-float))
+(defconstant PII #.(coerce (* pi 2d0) 'double-float))
+(defconstant PI5 #.(coerce (* pi 0.5d0) 'double-float))
 
 (defun v? (&optional silent)
   (if silent (slot-value (asdf:find-system 'weir) 'asdf:version)
@@ -36,14 +39,13 @@
 (defun terminate (status)
   (format t "~%terminated with status: ~a~%" status)
   #+sbcl (sb-ext:quit :unix-status status)
-  #+ccl (ccl:quitstatus)
-  #+clisp (ext:quitstatus)
+  #+ccl (ccl:quit status)
+  #+clisp (ext:quit status)
   #+cmu (unix:unix-exit status)
-  #+ecl (ext:quitstatus)
   #+abcl (ext:quit:status status)
-  #+allegro (excl:exitstatus :quiet t)
+  #+allegro (excl:exit status :quiet t)
   #+gcl (common-lisp-user::bye status)
-  #+ecl (ext:quitstatus))
+  #+ecl (ext:quit status))
 
 
 ;https://github.com/inconvergent/weir/pull/1/commits/4a1df51914800c78cb34e8194222185ebde12388

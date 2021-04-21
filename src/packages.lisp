@@ -2,6 +2,7 @@
   (:use #:common-lisp)
   (:export
    #:*opt-settings*
+   #:PI*
    #:PI5
    #:PII
    #:abbrev
