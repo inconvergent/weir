@@ -6,15 +6,9 @@
 
 (declaim (type double-float PII PI5))
 
-#:+SBCL
-(defconstant PII (the double-float #.(* PI 2d0)))
-#:+SBCL
-(defconstant PI5 (the double-float #.(* PI 0.5d0)))
-
-#:+ECL
-(defconstant PII (the double-float #.(* (float PI 1.0d0) 2d0)))
-#:+ECL
-(defconstant PI5 (the double-float #.(* (float PI 1.0d0) 0.5d0)))
+(defconstant PI* #.(coerce pi 'double-float)) ; so that there is a double pi available
+(defconstant PII #.(coerce (* pi 2d0) 'double-float))
+(defconstant PI5 #.(coerce (* pi 0.5d0) 'double-float))
 
 (defun v? (&optional silent)
   (if silent (slot-value (asdf:find-system 'weir) 'asdf:version)
